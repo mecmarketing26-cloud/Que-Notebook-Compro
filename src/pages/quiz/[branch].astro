@@ -1,0 +1,14 @@
+---
+// Compat: las rutas viejas /quiz/tecnico y /quiz/general redirigen al quiz único.
+export const prerender = true;
+
+export function getStaticPaths() {
+  return [
+    { params: { branch: 'tecnico' }, props: { modo: 'tecnico' } },
+    { params: { branch: 'general' }, props: { modo: 'guiado' } },
+  ];
+}
+
+const { modo } = Astro.props;
+return Astro.redirect(`/quiz?modo=${modo}`, 301);
+---

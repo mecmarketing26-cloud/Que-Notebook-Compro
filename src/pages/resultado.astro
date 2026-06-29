@@ -1,0 +1,218 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/layout/Header.astro';
+import Footer from '../components/layout/Footer.astro';
+import NotebookCard from '../components/products/NotebookCard.astro';
+import ShareButton from '../components/ShareButton.astro';
+import { RESULT, SITE } from '../data/copy';
+import { liveSearch } from '../lib/live-search';
+import { catalogStatus } from '../lib/catalog';
+import { queryToFilters, filtersToQuery, BUDGET_RANGES } from '../shared/quiz-map.mjs';
+import type { NotebookProduct } from '../lib/types';
+
+const filters = queryToFilters(Astro.url.searchParams);
+const hardPrice = Astro.url.searchParams.get('strict') === '1';
+
+// REAL-TIME: decide over the whole live ML catalog (cached price-aware index).
+let products: NotebookProduct[] = [];
+let relaxed = false;
+let universe = 0;
+let building = false;
+let priceEmpty = false;
+let similar: NotebookProduct[] = [];
+try {
+  const result = await liveSearch(filters, { max: 12, hardPrice });
+  products = result.products;
+  relaxed = result.relaxed;
+  universe = result.universe;
+  building = result.building;
+  priceEmpty = result.priceEmpty;
+  similar = result.similar;
+} catch {
+  products = [];
+}
+
+const empty = products.length === 0;
+const catalogReady = catalogStatus().ready;
+const emptyMsg = !catalogReady
+  ? RESULT.empty_no_creds
+  : RESULT.empty_no_match;
+const subtitle = relaxed
+  ? RESULT.relaxed
+  : universe
+    ? 'Ordenadas de mejor a peor entre todas las notebooks disponibles de Mercado Libre.'
+    : RESULT.subtitle;
+
+// Para el estado "no hay en este precio": botones para cambiar SOLO el rango,
+// conservando el resto de los filtros (specs / sistema operativo).
+const baseFilters = { ...filters };
+delete (baseFilters as any).priceMin;
+delete (baseFilters as any).priceMax;
+const RANGE_LABELS: Record<string, string> = {
+  hasta_700k: 'Menos de $700.000',
+  '700k_1m': '$700.000 – $1.000.000',
+  '1m_2m': '$1.000.000 – $2.000.000',
+  '2m_4m': '$2.000.000 – $4.000.000',
+  sin_limite: 'Sin límite de precio',
+};
+const altBudgets = Object.entries(BUDGET_RANGES).map(([k, pr]) => {
+  const q = filtersToQuery({ ...baseFilters, ...(pr as object) });
+  return { key: k, label: RANGE_LABELS[k], href: `/resultado?${q}${k === 'sin_limite' ? '' : '&strict=1'}` };
+});
+const fmt = (n: number) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n);
+---
+
+<BaseLayout title={`${RESULT.title} — ${SITE.name}`} description={RESULT.subtitle}>
+  <Header />
+
+  <main class="result-page">
+    <div class="result-content">
+      <header class="result-header">
+        <h1 class="result-title">{RESULT.title}</h1>
+        <p class="result-subtitle">{subtitle}</p>
+      </header>
+
+      {priceEmpty ? (
+        <div class="price-empty">
+          <p class="pe-emoji">💸</p>
+          <p class="pe-title">No hay notebooks en ese rango de precio</p>
+          <p class="pe-msg">No encontramos modelos que cumplan lo que pediste dentro de ese presupuesto. Probá otro rango:</p>
+          <div class="pe-budgets">
+            {altBudgets.map((b) => (
+              <a href={b.href} class="btn btn-secondary pe-budget">{b.label}</a>
+            ))}
+          </div>
+          {similar.length > 0 && (
+            <>
+              <p class="pe-similar-h">…o mirá estas parecidas (otro precio):</p>
+              <div class="result-grid">
+                {similar.map((p) => <NotebookCard product={p} compare={true} />)}
+              </div>
+            </>
+          )}
+          <div class="pe-actions">
+            <a href="/quiz?restart=1" class="btn btn-ghost">🔄 Hacer el test de nuevo</a>
+          </div>
+        </div>
+      ) : empty ? (
+        <div class="empty">
+          <p class="empty-emoji">{building ? '⏳' : '🔍'}</p>
+          <p class="empty-msg">{emptyMsg}</p>
+          {building ? (
+            <button class="btn btn-primary" onclick="location.reload()">Actualizar</button>
+          ) : (
+            <div class="empty-actions">
+              <a href="/quiz?modo=guiado" class="btn btn-primary">Ayudame a elegir</a>
+              <a href="/quiz?modo=tecnico" class="btn btn-secondary">Filtrar por specs</a>
+            </div>
+          )}
+        </div>
+      ) : (
+        <>
+          <p class="podium-hint">🏆 El podio: de la mejor opción para vos hacia abajo. Tildá 2 o más para compararlas.</p>
+          <div class="result-grid">
+            {products.map((p, i) => <NotebookCard product={p} rank={i + 1} compare={true} />)}
+          </div>
+          <div class="result-actions">
+            <a href="/quiz?restart=1" class="btn btn-secondary">🔄 {RESULT.cta_again}</a>
+            <ShareButton title="Mirá estas notebooks" class="btn btn-ghost" />
+            <a href="/quiz?modo=tecnico" class="btn btn-ghost">Filtrar por specs</a>
+          </div>
+        </>
+      )}
+    </div>
+  </main>
+
+  <!-- Compare bar -->
+  <div class="compare-bar" id="compare-bar" hidden>
+    <span class="compare-count" id="compare-count">0 seleccionadas</span>
+    <div class="compare-actions">
+      <button class="btn btn-ghost" id="compare-clear" type="button">Limpiar</button>
+      <a class="btn btn-primary" id="compare-go" href="#">Comparar →</a>
+    </div>
+  </div>
+
+  <Footer />
+</BaseLayout>
+
+{building && empty && <script is:inline>setTimeout(() => location.reload(), 6000);</script>}
+
+<script>
+  // Collect selected notebooks and drive the compare bar.
+  const selected = new Map<string, string>();
+  const bar = document.getElementById('compare-bar') as HTMLElement;
+  const countEl = document.getElementById('compare-count') as HTMLElement;
+  const goEl = document.getElementById('compare-go') as HTMLAnchorElement;
+
+  function refresh() {
+    const n = selected.size;
+    countEl.textContent = `${n} seleccionada${n !== 1 ? 's' : ''}`;
+    goEl.href = `/comparar?ids=${[...selected.keys()].join(',')}`;
+    (goEl as HTMLElement).style.pointerEvents = n >= 2 ? 'auto' : 'none';
+    (goEl as HTMLElement).style.opacity = n >= 2 ? '1' : '0.4';
+    bar.hidden = n === 0;
+  }
+
+  document.querySelectorAll<HTMLInputElement>('input[data-compare-id]').forEach((cb) => {
+    cb.addEventListener('change', () => {
+      const id = cb.dataset.compareId!;
+      if (cb.checked) {
+        if (selected.size >= 4) { cb.checked = false; return; } // máx 4
+        selected.set(id, cb.dataset.compareTitle ?? '');
+      } else selected.delete(id);
+      refresh();
+    });
+  });
+
+  document.getElementById('compare-clear')?.addEventListener('click', () => {
+    selected.clear();
+    document.querySelectorAll<HTMLInputElement>('input[data-compare-id]').forEach((c) => (c.checked = false));
+    refresh();
+  });
+</script>
+
+<style>
+  .result-page { min-height: 100dvh; padding-top: 80px; padding-bottom: 120px; }
+  .result-content { max-width: 460px; margin: 0 auto; padding: var(--space-xl) var(--space-md); }
+  .result-header { text-align: center; margin-bottom: var(--space-lg); }
+  .result-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; letter-spacing: -0.03em; font-size: clamp(2.2rem, 6vw, 3.6rem); line-height: 1.02; color: var(--color-navy); }
+  .result-subtitle { color: var(--color-text-secondary); max-width: 620px; margin: var(--space-sm) auto 0; }
+  .podium-hint { text-align: center; color: var(--color-text-soft); font-size: 0.85rem; margin-bottom: var(--space-xl); }
+
+  .result-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--space-lg); margin-bottom: var(--space-xl); }
+  .result-actions { display: flex; gap: var(--space-md); justify-content: center; flex-wrap: wrap; padding-top: var(--space-lg); }
+
+  /* No hay en este rango de precio */
+  .price-empty { padding: var(--space-lg) 0; }
+  .pe-emoji { font-size: 2.6rem; text-align: center; }
+  .pe-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; color: var(--color-navy); font-size: 1.3rem; text-align: center; margin-top: var(--space-sm); letter-spacing: -0.02em; }
+  .pe-msg { color: var(--color-text-secondary); text-align: center; max-width: 420px; margin: var(--space-sm) auto var(--space-lg); font-size: 0.9rem; }
+  .pe-budgets { display: flex; flex-direction: column; gap: var(--space-sm); max-width: 360px; margin: 0 auto var(--space-xl); }
+  .pe-budget { width: 100%; justify-content: center; font-size: 0.9rem; }
+  .pe-similar-h { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; color: var(--color-navy); text-align: center; margin-bottom: var(--space-md); font-size: 1rem; }
+  .pe-actions { display: flex; justify-content: center; margin-top: var(--space-lg); }
+
+  .empty { text-align: center; padding: var(--space-3xl) var(--space-lg); display: flex; flex-direction: column; align-items: center; gap: var(--space-md); }
+  .empty-emoji { font-size: 3rem; }
+  .empty-msg { color: var(--color-text-secondary); max-width: 480px; }
+  .empty-actions { display: flex; gap: var(--space-md); flex-wrap: wrap; justify-content: center; margin-top: var(--space-md); }
+
+  /* Compare bar */
+  .compare-bar {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 90;
+    display: flex; align-items: center; justify-content: space-between; gap: var(--space-md);
+    max-width: 760px; margin: 0 auto var(--space-md); padding: 12px 14px 12px 20px;
+    background: var(--color-navy); border: 1px solid var(--color-navy); color: #fff;
+    border-radius: var(--radius-pill); box-shadow: 0 12px 30px rgba(22,34,76,0.35);
+  }
+  .compare-count { font-weight: 700; font-size: 0.9rem; color: #fff; }
+  .compare-actions { display: flex; gap: var(--space-sm); align-items: center; }
+  .compare-bar .btn-ghost { color: rgba(255,255,255,0.75); }
+  .compare-bar .btn-ghost:hover { color: #fff; }
+
+  @media (max-width: 640px) {
+    .result-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .result-actions { flex-direction: column; align-items: stretch; }
+    .compare-bar { left: 10px; right: 10px; }
+  }
+</style>

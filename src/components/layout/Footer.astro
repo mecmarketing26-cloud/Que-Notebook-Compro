@@ -1,0 +1,116 @@
+---
+import { FOOTER, SITE } from '../../data/copy';
+
+interface Props {
+  showDisclosure?: boolean;
+}
+
+const { showDisclosure = true } = Astro.props;
+---
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    {showDisclosure && (
+      <p class="disclosure">
+        <span class="affiliate-chip" aria-label="Aviso de afiliado">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+            <path d="M6 0a6 6 0 1 0 0 12A6 6 0 0 0 6 0zm.75 9H5.25V5.25h1.5V9zm0-4.5H5.25V3h1.5v1.5z"/>
+          </svg>
+          Afiliado
+        </span>
+        {FOOTER.disclosure}
+      </p>
+    )}
+
+    <nav class="footer-nav" aria-label="Navegación del pie">
+      {FOOTER.links.map((link) => (
+        <a href={link.href} class="footer-link">{link.label}</a>
+      ))}
+    </nav>
+
+    <nav class="footer-legal" aria-label="Enlaces legales">
+      {FOOTER.legal.map((link) => (
+        <a href={link.href} class="footer-legal-link">{link.label}</a>
+      ))}
+    </nav>
+
+    <p class="independence">
+      Sitio <b>independiente</b> · no pertenece a Mercado Libre. Usamos esos nombres solo para identificar productos.
+    </p>
+
+    <p class="copyright">
+      &copy; {new Date().getFullYear()} {SITE.name} &mdash; Hecho con algo de criterio y bastante mate.
+    </p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    border-top: 1px solid var(--color-card-border);
+    background: var(--color-bg-deep);
+    padding: var(--space-2xl) var(--space-lg) var(--space-xl);
+    margin-top: var(--space-3xl);
+  }
+
+  .footer-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-lg);
+    text-align: center;
+  }
+
+  .disclosure {
+    max-width: 660px;
+    color: var(--color-text-secondary);
+    font-size: 0.8rem;
+    line-height: 1.6;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  .footer-nav {
+    display: flex;
+    gap: var(--space-xl);
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .footer-link {
+    color: var(--color-text-soft);
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: color 0.15s;
+  }
+  .footer-link:hover { color: var(--color-navy); }
+
+  .footer-legal {
+    display: flex;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .footer-legal-link {
+    color: var(--color-text-muted);
+    font-size: 0.78rem;
+    font-weight: 500;
+    transition: color 0.15s;
+  }
+  .footer-legal-link:hover { color: var(--color-navy); }
+
+  .independence {
+    max-width: 660px;
+    color: var(--color-text-muted);
+    font-size: 0.78rem;
+    line-height: 1.6;
+  }
+
+  .copyright {
+    color: var(--color-text-muted);
+    font-size: 0.75rem;
+  }
+</style>

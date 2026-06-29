@@ -1,0 +1,216 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/layout/Header.astro';
+import Footer from '../../components/layout/Footer.astro';
+import ShareButton from '../../components/ShareButton.astro';
+import { SITE, PRODUCTO } from '../../data/copy';
+import { getNotebook } from '../../lib/catalog';
+import { idealUses, pros, idealForSentence } from '../../shared/guidance.mjs';
+
+const { id } = Astro.params;
+const p = id ? await getNotebook(id) : undefined;
+
+if (!p) {
+  return new Response(null, { status: 404, statusText: 'Notebook no encontrada o sin stock' });
+}
+
+const fmt = (n: number) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: p.currency || 'ARS', maximumFractionDigits: 0 }).format(n);
+const formattedPrice = p.price != null ? fmt(p.price) : null;
+const formattedOld = p.originalPrice ? fmt(p.originalPrice) : null;
+const discount = p.discountPct && p.discountPct >= 5 ? p.discountPct : null;
+
+const uses = idealUses(p.specs);
+const prosList = pros(p.specs);
+const idealLine = idealForSentence(p.specs);
+
+// Display rows from normalized specs.
+const s = p.specs;
+const rows: Array<[string, string]> = [];
+if (s.brand) rows.push(['Marca', s.brand]);
+if (s.processorLine) rows.push(['Procesador', s.processorLine]);
+if (s.ramGb) rows.push(['Memoria RAM', `${s.ramGb} GB`]);
+if (s.storageGb) rows.push(['Almacenamiento', `${s.storageGb >= 1024 ? s.storageGb / 1024 + ' TB' : s.storageGb + ' GB'} ${s.storageType ?? ''}`.trim()]);
+if (s.screenInches) rows.push(['Pantalla', `${s.screenInches}"`]);
+if (s.gpuModel) rows.push(['Placa de video', s.gpuModel]);
+else if (s.gpuDedicated != null) rows.push(['Placa de video', s.gpuDedicated ? 'Dedicada' : 'Integrada']);
+if (s.os) rows.push(['Sistema operativo', s.os]);
+
+const canonical = new URL(`/notebook/${p.id}`, Astro.site).toString();
+const jsonLd = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'Product',
+  name: p.title,
+  image: p.image ? [p.image] : undefined,
+  description: p.description || undefined,
+  brand: s.brand ? { '@type': 'Brand', name: s.brand } : undefined,
+  offers: {
+    '@type': 'Offer',
+    price: p.price ?? undefined,
+    priceCurrency: p.currency || 'ARS',
+    availability: (p.available ?? 0) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+    url: canonical,
+  },
+});
+---
+
+<BaseLayout
+  title={`${p.title} — ${SITE.name}`}
+  description={p.description || `${p.title}. Precio de referencia y specs en vivo desde Mercado Libre.`}
+  ogImage={p.image || SITE.ogImage}
+  jsonLd={jsonLd}
+>
+  <Header />
+
+  <main class="product-page">
+    <div class="product-inner">
+      <div class="product-media">
+        <img src={p.image} alt={p.title} width="600" height="600" decoding="async" />
+      </div>
+
+      <div class="product-info">
+        <h1 class="product-title">{p.title}</h1>
+
+        {uses.length > 0 && (
+          <ul class="use-tags">
+            {uses.map((u) => <li class="use-tag">{u}</li>)}
+          </ul>
+        )}
+
+        <div class="product-price">
+          {formattedPrice ? (
+            <>
+              {formattedOld && (
+                <span class="price-old-row">
+                  <span class="price-old">{formattedOld}</span>
+                  {discount && <span class="price-off">-{discount}%</span>}
+                </span>
+              )}
+              <span class="price-now-row">
+                <span class="price-from">{PRODUCTO.precio_desde}</span>
+                <span class="price-tag big">{formattedPrice}</span>
+              </span>
+            </>
+          ) : (
+            <span class="no-price">{PRODUCTO.sin_precio}</span>
+          )}
+        </div>
+        <p class="price-note">{PRODUCTO.precio_nota}</p>
+
+        {p.description && <p class="product-desc">{p.description}</p>}
+        <p class="product-ideal">{idealLine}</p>
+
+        {prosList.length > 0 && (
+          <div class="pros">
+            <h2 class="pros-h">Lo bueno</h2>
+            <ul class="pros-list">
+              {prosList.map((x) => <li>{x}</li>)}
+            </ul>
+          </div>
+        )}
+
+        {rows.length > 0 && (
+          <table class="spec-table">
+            <tbody>
+              {rows.map(([k, v]) => (
+                <tr><th>{k}</th><td>{v}</td></tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+
+        <a
+          href={p.shortUrl}
+          class="btn btn-ml buy-btn"
+          target="_blank"
+          rel="sponsored noopener noreferrer"
+          data-item-id={p.id}
+          data-item-price={p.price ?? ''}
+        >
+          {PRODUCTO.cta_comprar}
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"></path></svg>
+        </a>
+        <ShareButton title={p.title} class="btn btn-secondary share-full" />
+
+        <p class="product-disclosure">
+          <span class="affiliate-chip">
+            <svg width="10" height="10" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+              <path d="M6 0a6 6 0 1 0 0 12A6 6 0 0 0 6 0zm.75 9H5.25V5.25h1.5V9zm0-4.5H5.25V3h1.5v1.5z"/>
+            </svg>
+            Afiliado
+          </span>
+          {PRODUCTO.disclosure}
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</BaseLayout>
+
+<script>
+  import { trackAffiliateClick } from '../../lib/analytics';
+  document.querySelectorAll<HTMLElement>('[data-item-id]').forEach((el) => {
+    el.addEventListener('click', () => {
+      trackAffiliateClick(el.dataset.itemId ?? '', {
+        price: el.dataset.itemPrice ? Number(el.dataset.itemPrice) : undefined,
+      });
+    });
+  });
+</script>
+
+<style>
+  .product-page { padding-top: 88px; padding-bottom: var(--space-3xl); min-height: 100dvh; }
+  .product-inner {
+    max-width: 460px;
+    margin: 0 auto;
+    padding: var(--space-xl) var(--space-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+    align-items: stretch;
+  }
+  .product-media {
+    background: var(--color-card);
+    border: 1px solid var(--color-card-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    padding: var(--space-lg);
+  }
+  .product-media img { width: 100%; height: auto; object-fit: contain; border-radius: var(--radius-md); }
+
+  .product-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; letter-spacing: -0.02em; color: var(--color-navy); font-size: 1.6rem; line-height: 1.2; margin-bottom: var(--space-sm); }
+
+  .use-tags { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; padding: 0; margin: 0 0 var(--space-md); }
+  .use-tag { font-size: 0.72rem; font-weight: 600; color: var(--color-blue); background: #eef2fb; border: 1px solid #dde6fb; border-radius: var(--radius-pill); padding: 4px 11px; }
+
+  .product-price { display: flex; flex-direction: column; gap: 2px; }
+  .price-old-row { display: flex; align-items: center; gap: 10px; }
+  .price-old { color: var(--color-text-muted); text-decoration: line-through; font-size: 1rem; }
+  .price-off { color: var(--color-green-text); font-weight: 800; font-size: 0.85rem; background: var(--color-green-soft); border-radius: 6px; padding: 2px 9px; }
+  .price-now-row { display: flex; align-items: baseline; gap: 8px; }
+  .price-from { color: var(--color-text-secondary); font-size: 0.85rem; }
+  .price-tag.big { font-size: 2.1rem; }
+  .price-note { color: var(--color-text-muted); font-size: 0.75rem; margin: 4px 0 var(--space-lg); }
+  .product-desc { color: var(--color-text-secondary); line-height: 1.6; margin-bottom: var(--space-sm); }
+  .product-ideal { color: var(--color-text-primary); font-weight: 600; margin-bottom: var(--space-lg); }
+
+  .pros { margin-bottom: var(--space-lg); }
+  .pros-h { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; color: var(--color-navy); font-size: 1.15rem; margin-bottom: var(--space-sm); }
+  .pros-list { margin: 0; padding-left: 1.1rem; color: var(--color-text-secondary); display: flex; flex-direction: column; gap: 6px; font-size: 0.9rem; }
+  .pros-list li::marker { color: var(--color-green); }
+  .share-full { width: 100%; margin-top: var(--space-sm); }
+
+  .spec-table { width: 100%; border-collapse: collapse; margin-bottom: var(--space-lg); background: var(--color-card); border: 1px solid var(--color-card-border); border-radius: var(--radius-lg); overflow: hidden; }
+  .spec-table th, .spec-table td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--color-card-border); font-size: 0.9rem; }
+  .spec-table tr:last-child th, .spec-table tr:last-child td { border-bottom: none; }
+  .spec-table th { color: var(--color-text-muted); font-weight: 500; width: 42%; }
+  .spec-table td { color: var(--color-text-navy); font-weight: 600; }
+
+  .buy-btn { width: 100%; padding: 16px; font-size: 1rem; }
+  .product-disclosure { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 0.72rem; color: var(--color-text-muted); margin-top: var(--space-md); }
+
+  @media (max-width: 768px) {
+    .product-inner { grid-template-columns: 1fr; gap: var(--space-lg); }
+    .product-media { position: static; }
+  }
+</style>

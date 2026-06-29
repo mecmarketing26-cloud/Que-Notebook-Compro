@@ -1,0 +1,35 @@
+{
+  "name": "que-notebook-comprar",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "session": "node --env-file=.env scripts/set-affiliate-session.mjs",
+    "get-refresh-token": "node --env-file=.env scripts/get-refresh-token.mjs",
+    "refresh-token": "node --env-file=.env scripts/refresh-token.mjs",
+    "inspect-attributes": "node --env-file=.env scripts/inspect-attributes.mjs",
+    "validate": "node --env-file=.env scripts/validate-seam.mjs",
+    "mint": "node --env-file=.env scripts/mint-links.mjs",
+    "describe": "node --env-file=.env scripts/generate-descriptions.mjs",
+    "catalog:backfill": "node --env-file=.env scripts/catalog.mjs backfill",
+    "catalog:grow": "node --env-file=.env scripts/catalog.mjs grow",
+    "catalog:refresh": "node --env-file=.env scripts/catalog.mjs refresh"
+  },
+  "dependencies": {
+    "@astrojs/netlify": "^5.5.0",
+    "@astrojs/preact": "^3.5.0",
+    "@astrojs/tailwind": "^5.1.0",
+    "astro": "^4.16.0",
+    "preact": "^10.24.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.0",
+    "@types/node": "^20.14.0",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.6.0"
+  }
+}

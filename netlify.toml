@@ -1,0 +1,17 @@
+[build]
+  command   = "npm run build"
+  publish   = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Nota: el adapter @astrojs/netlify (output: 'server') genera su propio ruteo
+# (todo lo no-estático va a la función SSR, que renderiza 404.astro para rutas
+# inexistentes). Por eso NO va un redirect catch-all a /404 acá: rompería el SSR.
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options        = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy        = "strict-origin-when-cross-origin"

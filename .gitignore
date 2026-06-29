@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.netlify/
+
+# Environment & secrets — NEVER commit these
+.env
+.env.local
+.env.*.local
+
+# Cached OAuth2 access token (regenerated from the refresh token)
+data/.token-cache.json
+
+# Affiliate browser session (cookie + csrf) — sensitive, recaptured from DevTools
+data/.affiliate-session.json
+
+# Local job bookkeeping (regenerated locally; not needed in the repo / deploy)
+data/.no-offer.json
+data/.last-daily.txt
+data/daily.log
+
+# Local scratch files
+scripts/_*.txt
+scripts/_*.mjs
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log
+
+# Astro generated types/cache
+.astro/

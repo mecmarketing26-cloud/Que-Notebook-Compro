@@ -1,0 +1,42 @@
+---
+interface Props {
+  title?: string;
+  label?: string;
+  class?: string;
+}
+const { title = '', label = '🔗 Compartir', class: cls = 'btn btn-secondary' } = Astro.props;
+---
+
+<button class={`${cls} share-btn`} type="button" data-share-title={title}>{label}</button>
+
+<script>
+  function toast(msg: string) {
+    const t = document.createElement('div');
+    t.className = 'share-toast';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    requestAnimationFrame(() => requestAnimationFrame(() => t.classList.add('is-visible')));
+    setTimeout(() => {
+      t.classList.remove('is-visible');
+      setTimeout(() => t.remove(), 300);
+    }, 2200);
+  }
+
+  document.querySelectorAll<HTMLElement>('.share-btn').forEach((btn) => {
+    if (btn.dataset.bound) return;
+    btn.dataset.bound = '1';
+    btn.addEventListener('click', async () => {
+      const url = location.href;
+      const title = btn.dataset.shareTitle || document.title;
+      try {
+        if (navigator.share) await navigator.share({ title, text: title, url });
+        else {
+          await navigator.clipboard.writeText(url);
+          toast('¡Link copiado!');
+        }
+      } catch {
+        /* user cancelled */
+      }
+    });
+  });
+</script>

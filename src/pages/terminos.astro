@@ -1,0 +1,121 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/layout/Header.astro';
+import Footer from '../components/layout/Footer.astro';
+import { SITE, LEGAL } from '../data/copy';
+
+export const prerender = true;
+
+const sections = [
+  {
+    title: 'No somos Mercado Libre',
+    icon: '<circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4M12 8h.01"></path>',
+    body: `Este es un sitio <b>independiente</b>. No pertenecemos ni estamos operados, patrocinados ni afiliados oficialmente a Mercado Libre ni a ninguna marca de notebooks. Usamos esos nombres solo para identificar productos.`,
+  },
+  {
+    title: 'Las recomendaciones son orientativas',
+    icon: '<path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3z"></path>',
+    body: `Solo intentamos ayudarte a encontrar una notebook según tu orientación y uso. El sistema <b>puede tener errores de match</b> y no garantizamos que el resultado sea el ideal para vos. Tomalo como un punto de partida y <b>hacé tu propia revisión</b> antes de comprar.`,
+  },
+  {
+    title: 'Precios y compra',
+    icon: '<line x1="12" x2="12" y1="2" y2="22"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>',
+    body: `Los precios y specs se toman de Mercado Libre y <b>pueden cambiar en cualquier momento</b>; el valor real es el que figure en ML al momento de comprar. La compra, el pago, el envío y la garantía se gestionan <b>íntegramente en Mercado Libre</b> con el vendedor correspondiente.`,
+  },
+  {
+    title: 'Enlaces de afiliados',
+    icon: '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>',
+    body: `Participamos del Programa de Afiliados de Mercado Libre. Si comprás a través de nuestros enlaces, podemos recibir una <b>comisión sin costo extra para vos</b>. Esto no condiciona el orden de las recomendaciones.`,
+  },
+  {
+    title: 'Privacidad',
+    icon: '<rect width="18" height="11" x="3" y="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path>',
+    body: `Usamos tus respuestas del quiz para armar la recomendación (se guardan en tu navegador) y herramientas de analítica para mejorar el sitio. <b>No vendemos tus datos.</b> Podés navegar sin registrarte. Ejercé tus derechos de la Ley 25.326 escribiéndonos.`,
+  },
+];
+---
+
+<BaseLayout
+  title={`Términos, privacidad y aviso legal — ${SITE.name}`}
+  description={`Términos, privacidad y aviso legal de ${SITE.name}: comparador independiente con enlaces de afiliado de Mercado Libre.`}
+>
+  <Header />
+
+  <main class="legal">
+    <div class="legal-panel">
+      <div class="legal-head">
+        <span class="legal-eyebrow">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFC233" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path></svg>
+          Información legal
+        </span>
+        <h1 class="legal-title">Términos, privacidad y aviso legal</h1>
+        <p class="legal-intro">Leé esto antes de usar el sitio. En resumen: somos un comparador independiente, las recomendaciones son orientativas y la compra siempre se hace en Mercado Libre.</p>
+      </div>
+
+      <div class="legal-card">
+        {sections.map((s, i) => (
+          <>
+            {i > 0 && <div class="legal-divider"></div>}
+            <div class="legal-row">
+              <span class="legal-ico">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" set:html={s.icon}></svg>
+              </span>
+              <div class="legal-rowbody">
+                <div class="legal-rowtitle">{s.title}</div>
+                <p class="legal-rowtext" set:html={s.body}></p>
+              </div>
+            </div>
+          </>
+        ))}
+
+        <div class="legal-contact">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1E50C7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+          <span>¿Dudas o errores? Escribinos a <b><a href={`mailto:${LEGAL.contactEmail}`}>{LEGAL.contactEmail}</a></b></span>
+        </div>
+
+        <p class="legal-updated">Última actualización: {LEGAL.lastUpdated} · {SITE.name}</p>
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  .legal { padding-top: 64px; background: var(--color-blue-page); min-height: 100dvh; }
+  .legal-panel { max-width: 460px; margin: 0 auto; padding: var(--space-md) var(--space-md) var(--space-2xl); color: #fff; }
+
+  .legal-head { padding: var(--space-lg) var(--space-sm) var(--space-md); }
+  .legal-eyebrow {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 0.7rem; letter-spacing: 0.04em; text-transform: uppercase; font-weight: 700;
+    color: #cfe0ff; margin-bottom: var(--space-md);
+  }
+  .legal-title {
+    font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800;
+    font-size: clamp(1.9rem, 6vw, 2.4rem); line-height: 1.04; letter-spacing: -0.025em; color: #fff;
+  }
+  .legal-intro { font-size: 0.92rem; color: #d4e1fb; line-height: 1.6; margin-top: var(--space-md); }
+
+  .legal-card { background: #fff; color: #2a2a2a; border-radius: var(--radius-xl); padding: var(--space-lg) var(--space-lg); box-shadow: var(--shadow-card); }
+
+  .legal-row { display: flex; gap: 12px; align-items: flex-start; }
+  .legal-ico {
+    flex: none; display: flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; border-radius: 9px; background: #EAF0FF; color: var(--color-blue-page);
+  }
+  .legal-rowtitle { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 1rem; color: var(--color-navy); }
+  .legal-rowtext { font-size: 0.85rem; color: #55524c; line-height: 1.62; margin-top: 6px; }
+  .legal-rowtext :global(b) { color: var(--color-navy); font-weight: 700; }
+  .legal-divider { height: 1px; background: #f0eee8; margin: var(--space-md) 0; }
+
+  .legal-contact {
+    margin-top: var(--space-lg); padding: 13px 15px; background: #EAF0FF; border-radius: var(--radius-md);
+    display: flex; align-items: center; gap: 11px;
+  }
+  .legal-contact span { font-size: 0.82rem; color: #33415c; line-height: 1.45; }
+  .legal-contact a { color: var(--color-blue-page); font-weight: 700; }
+  .legal-contact a:hover { text-decoration: underline; }
+
+  .legal-updated { font-size: 0.72rem; color: #a8a392; margin-top: var(--space-md); }
+</style>

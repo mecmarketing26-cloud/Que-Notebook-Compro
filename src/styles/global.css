@@ -1,0 +1,415 @@
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Design tokens · Bento ─────────────────────────── */
+:root {
+  --color-navy:           #16224C;
+  --color-amber:          #FFC233;
+  --color-amber-hover:    #FFCE57;
+  --color-blue:           #2563EB;
+  --color-blue-hover:     #1D4FD0;
+  --color-blue-page:      #1E50C7;
+  --color-green:          #12A150;
+  --color-green-text:     #0E7A45;
+  --color-green-soft:     #E4F6EC;
+
+  --color-bg:             #EFEDE7; /* fondo app (papel) */
+  --color-bg-deep:        #DAD6CD; /* canvas / fondo profundo */
+  --color-card:           #FFFFFF;
+  --color-card-border:    #ECE8DF;
+  --color-tile:           #F6F5F0;
+
+  --color-text-primary:   #1E1B16;
+  --color-text-navy:      #16224C;
+  --color-text-secondary: #5D5A51;
+  --color-text-soft:      #75716A;
+  --color-text-muted:     #9B9788;
+
+  /* Aliases legacy (mismos nombres que usaban los componentes) */
+  --color-surface:        #FFFFFF;
+  --color-surface2:       #F6F5F0;
+  --color-border:         #ECE8DF;
+  --color-accent:         #FFC233;
+  --color-accent-hover:   #FFCE57;
+  --color-highlight:      #16224C;
+
+  --radius-sm:   10px;
+  --radius-md:   13px;
+  --radius-lg:   18px;
+  --radius-xl:   20px;
+  --radius-pill: 9999px;
+
+  --shadow-card: 0 18px 50px rgba(0,0,0,0.16);
+  --shadow-lift: 0 12px 28px rgba(30,27,22,0.14);
+  --shadow-cta:  0 6px 20px rgba(255,194,51,0.38);
+  --shadow-glow: 0 8px 30px rgba(255,194,51,0.55);
+
+  --space-xs:  4px;
+  --space-sm:  8px;
+  --space-md:  16px;
+  --space-lg:  24px;
+  --space-xl:  40px;
+  --space-2xl: 64px;
+  --space-3xl: 96px;
+}
+
+/* ── Base reset ────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+[hidden] { display: none !important; }
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+img, video { max-width: 100%; display: block; }
+
+a { color: inherit; text-decoration: none; }
+
+/* ── Typography helpers ────────────────────────────── */
+.font-display { font-family: 'Bricolage Grotesque', sans-serif; letter-spacing: -0.02em; }
+
+/* ── Button primitives ─────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-weight: 800;
+  font-size: 1rem;
+  padding: 14px 28px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
+  text-decoration: none;
+  line-height: 1;
+}
+
+.btn:active { transform: scale(0.98); }
+
+/* Amber = CTA principal (hacer el test / ver mis notebooks). Reservado. */
+.btn-primary {
+  background-color: var(--color-amber);
+  color: var(--color-navy);
+  box-shadow: var(--shadow-cta);
+}
+.btn-primary:hover {
+  background-color: var(--color-amber-hover);
+  transform: translateY(-2px);
+}
+
+/* Azul = acción Mercado Libre (ver precio / comprar). */
+.btn-ml {
+  background-color: var(--color-blue);
+  color: #fff;
+}
+.btn-ml:hover {
+  background-color: var(--color-blue-hover);
+}
+
+/* Secundario = contorno navy sobre papel. */
+.btn-secondary {
+  background-color: transparent;
+  color: var(--color-navy);
+  border: 1.5px solid #e0dccf;
+  box-shadow: none;
+}
+.btn-secondary:hover {
+  border-color: var(--color-navy);
+  background: #fff;
+}
+
+.btn-ghost {
+  background-color: transparent;
+  color: var(--color-text-soft);
+  font-weight: 600;
+  box-shadow: none;
+  padding: 10px 16px;
+}
+.btn-ghost:hover { color: var(--color-navy); }
+
+/* ── CTA del quiz (amber con glow pulsante + flecha) ─ */
+@keyframes ctaGlow {
+  0%, 100% { box-shadow: 0 6px 20px rgba(255,194,51,0.38); }
+  50%      { box-shadow: 0 8px 30px rgba(255,194,51,0.70); }
+}
+.ctaQuiz {
+  animation: ctaGlow 2.2s ease-in-out infinite;
+  transition: transform 0.18s ease, background-color 0.18s ease;
+}
+.ctaQuiz:hover { transform: translateY(-2px) scale(1.015); background-color: var(--color-amber-hover) !important; }
+.ctaQuiz svg { transition: transform 0.18s ease; }
+.ctaQuiz:hover svg { transform: translateX(3px); }
+
+/* ── Lift (hover de tarjetas bento) ────────────────── */
+.lift { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.lift:hover { transform: translateY(-4px); box-shadow: var(--shadow-lift); }
+
+/* ── Tile de íconos (home "por uso") ───────────────── */
+.icoTile svg { transition: transform 0.22s ease; }
+.icoTile:hover svg { transform: scale(1.16) rotate(-4deg); }
+
+/* ── Punto "en vivo / actualizado" ─────────────────── */
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.35; transform: scale(0.8); }
+}
+
+/* ── Card ──────────────────────────────────────────── */
+.card {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lift);
+}
+
+/* ── Affiliate disclosure chip ─────────────────────── */
+.affiliate-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #eef2fb;
+  border: 1px solid #dde6fb;
+  border-radius: var(--radius-pill);
+  color: var(--color-blue);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 12px;
+}
+
+/* ── Price tag ─────────────────────────────────────── */
+.price-tag {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  color: var(--color-navy);
+  font-weight: 800;
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+}
+.price-ref {
+  color: var(--color-text-muted);
+  font-size: 0.7rem;
+  font-weight: 400;
+  margin-left: 4px;
+}
+
+/* ── Progress bar (quiz) ───────────────────────────── */
+.progress-bar-track {
+  background: rgba(22,34,76,0.12);
+  border-radius: var(--radius-pill);
+  height: 6px;
+  width: 100%;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  background: var(--color-amber);
+  border-radius: var(--radius-pill);
+  height: 100%;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Fade-in utility ───────────────────────────────── */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up { animation: fade-up 0.5s ease both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ctaQuiz, .lift, .icoTile svg, .animate-fade-up { animation: none !important; transition: none !important; }
+}
+
+/* ── Focus visible ─────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--color-blue);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+/* ── Product card shared styles ───────────────────────
+   Definidos aquí (global) para que apliquen también a
+   cards generadas dinámicamente via innerHTML en JS.   */
+.card-image-link { display: block; overflow: hidden; background: #fff; }
+.card-img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+  padding: 14px;
+  transition: transform 0.3s ease;
+}
+.card-image-link:hover .card-img { transform: scale(1.04); }
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-lg);
+  flex: 1;
+}
+
+.card-title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-text-navy);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.card-title a       { color: inherit; }
+.card-title a:hover { color: var(--color-blue); }
+
+.card-desc {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: var(--space-sm);
+}
+
+/* Footer en columna: precio arriba, botón full-width abajo */
+.card-footer  { display: flex; flex-direction: column; gap: var(--space-sm); }
+.price-area   { display: flex; align-items: baseline; gap: 6px; }
+.no-price     { color: var(--color-text-secondary); font-size: 0.875rem; font-weight: 600; }
+
+.card-cta {
+  width: 100%;
+  font-size: 0.875rem;
+  padding: 12px 16px;
+  text-align: center;
+  justify-content: center;
+  white-space: normal;
+}
+
+.card-disclosure {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.68rem;
+  color: var(--color-text-muted);
+  flex-wrap: wrap;
+  margin-top: var(--space-xs);
+}
+
+/* ── Share toast ───────────────────────────────────── */
+.share-toast {
+  position: fixed;
+  bottom: var(--space-xl);
+  left: 50%;
+  transform: translateX(-50%) translateY(16px);
+  background: var(--color-navy);
+  border: 1px solid var(--color-navy);
+  border-radius: var(--radius-pill);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 10px 24px;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 9999;
+  pointer-events: none;
+  box-shadow: 0 10px 30px rgba(22,34,76,0.35);
+  white-space: nowrap;
+}
+.share-toast.is-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── Mobile globals ────────────────────────────────── */
+@media (max-width: 480px) {
+  .btn {
+    padding: 12px 22px;
+    font-size: 0.9375rem;
+  }
+  .container {
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
+  }
+
+  /* Card compacta en single-card pages */
+  .random-card-wrap .card-img,
+  .random-spot-card .card-img {
+    aspect-ratio: unset !important;
+    max-height: 200px;
+    width: 100%;
+    object-fit: contain;
+  }
+
+  .random-card-wrap .card-body,
+  .random-spot-card .card-body {
+    padding: 10px 14px;
+    gap: 4px;
+  }
+
+  .random-card-wrap .card-desc,
+  .random-spot-card .card-desc {
+    -webkit-line-clamp: 1;
+    margin-bottom: 0;
+  }
+
+  .random-card-wrap .card-disclosure,
+  .random-spot-card .card-disclosure {
+    display: none;
+  }
+
+  /* Grid de resultados en 3 columnas (estilo e-commerce) */
+  .result-grid .result-card .card-body {
+    padding: 6px 8px 8px;
+    gap: 2px;
+  }
+
+  .result-grid .result-card .card-title {
+    font-size: 0.7rem;
+    -webkit-line-clamp: 2;
+    line-height: 1.3;
+  }
+
+  .result-grid .result-card .price-tag {
+    font-size: 0.95rem;
+  }
+
+  .result-grid .result-card .price-ref {
+    display: none;
+  }
+
+  .result-grid .result-card .card-desc,
+  .result-grid .result-card .card-cta,
+  .result-grid .result-card .card-disclosure {
+    display: none;
+  }
+
+  .result-grid .result-card .card-footer {
+    gap: 0;
+  }
+
+  .result-grid .result-card .price-area {
+    margin-top: 2px;
+  }
+}

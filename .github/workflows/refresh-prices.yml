@@ -1,0 +1,62 @@
+name: Refrescar precios
+
+# Mantiene data/catalog.json con precios/stock frescos SIN llamadas a la API por
+# visita (eso es lo que mantiene al sitio dentro de la política de ML y a salvo de
+# los crawlers). Cada corrida re-precia los productos ya guardados y commitea el
+# catálogo → el push dispara el rebuild+deploy de Netlify.
+#
+# Requiere 3 secrets del repo (Settings → Secrets and variables → Actions):
+#   ML_CLIENT_ID, ML_CLIENT_SECRET, ML_REFRESH_TOKEN
+#
+# NOTA: sumar productos NUEVOS (grow) NO corre acá — necesita la sesión de
+# afiliado (cookie de navegador) y se hace local con `npm run catalog:grow`.
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'   # cada 6 horas (UTC). Cambiá a '0 */12 * * *' para cada 12h.
+  workflow_dispatch: {}       # permite dispararla a mano desde la pestaña Actions
+
+concurrency:
+  group: refresh-prices
+  cancel-in-progress: false
+
+permissions:
+  contents: write             # para commitear el catálogo actualizado
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Instalar dependencias
+        run: npm ci || npm install
+
+      - name: Armar .env desde los secrets (no se commitea)
+        run: |
+          {
+            echo "ML_CLIENT_ID=${{ secrets.ML_CLIENT_ID }}"
+            echo "ML_CLIENT_SECRET=${{ secrets.ML_CLIENT_SECRET }}"
+            echo "ML_REFRESH_TOKEN=${{ secrets.ML_REFRESH_TOKEN }}"
+          } > .env
+
+      - name: Refrescar precios del catálogo
+        run: npm run catalog:refresh
+
+      - name: Commitear catálogo actualizado (dispara deploy en Netlify)
+        run: |
+          rm -f .env
+          git config user.name "catalog-bot"
+          git config user.email "catalog-bot@users.noreply.github.com"
+          git add data/catalog.json
+          if git diff --staged --quiet; then
+            echo "Sin cambios de precio; nada que commitear."
+          else
+            git commit -m "chore(catalog): refrescar precios ($(date -u +%Y-%m-%dT%H:%MZ))"
+            git push
+          fi

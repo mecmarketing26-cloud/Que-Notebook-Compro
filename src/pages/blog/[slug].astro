@@ -1,0 +1,256 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/layout/Header.astro';
+import Footer from '../../components/layout/Footer.astro';
+import ShareButton from '../../components/ShareButton.astro';
+import { SITE, PRODUCTO } from '../../data/copy';
+import { BLOG_TOPICS, getTopic, categoryFor } from '../../data/blog';
+import { liveSearch } from '../../lib/live-search';
+import { specSummary } from '../../shared/attributes.mjs';
+import { idealForSentence } from '../../shared/guidance.mjs';
+
+const { slug } = Astro.params;
+const topic = slug ? getTopic(slug) : undefined;
+if (!topic) return new Response(null, { status: 404 });
+
+const { products, building, universe } = await liveSearch(topic.filters, { max: topic.max ?? 8, match: topic.match });
+
+const fmt = (n: number) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n);
+const canonical = new URL(`/blog/${topic.slug}`, Astro.site).toString();
+const category = categoryFor(topic.slug);
+const readMin = Math.max(4, Math.ceil(products.length * 0.8));
+
+// Related topics (internal links for SEO)
+const related = BLOG_TOPICS.filter((t) => t.slug !== topic.slug).slice(0, 4);
+
+// Veredicto por puesto (badge + etiqueta corta para el índice).
+const RANK = [
+  { label: 'La mejor en general', cls: 'rb-gold' },
+  { label: 'Mejor relación precio', cls: 'rb-blue' },
+  { label: 'La más barata que vale la pena', cls: 'rb-green' },
+];
+const rankMeta = (i: number) => RANK[i] ?? { label: `Opción #${i + 1}`, cls: 'rb-muted' };
+
+const jsonLd = JSON.stringify([
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: topic.h1,
+    description: topic.description,
+    datePublished: new Date().toISOString().slice(0, 10),
+    author: { '@type': 'Organization', name: SITE.name },
+    mainEntityOfPage: canonical,
+    keywords: (topic.keywords ?? []).join(', '),
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    itemListElement: products.map((p, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: p.title,
+      url: new URL(`/notebook/${p.id}`, Astro.site).toString(),
+    })),
+  },
+]);
+---
+
+<BaseLayout title={topic.title} description={topic.description} jsonLd={jsonLd}>
+  <Header />
+
+  <main class="post">
+    <div class="post-wrap">
+      <nav class="post-crumb"><a href="/blog">← Volver al blog</a></nav>
+
+      <!-- HERO (navy) -->
+      <header class="post-hero">
+        <div class="ph-meta">
+          <span class="ph-cat">{category}</span>
+          <span>·</span>
+          <span>Actualizada hoy</span>
+        </div>
+        <h1 class="ph-title">{topic.h1}</h1>
+        <p class="ph-intro">{topic.intro}</p>
+        <div class="ph-foot">
+          <span class="ph-stat">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
+            {readMin} min
+          </span>
+          <span class="ph-dot"></span>
+          <span class="ph-stat">Todas las disponibles de Mercado Libre</span>
+          <ShareButton title={topic.h1} class="ph-share" />
+        </div>
+      </header>
+
+      <!-- CTA quiz -->
+      <a href="/quiz" class="btn btn-primary ctaQuiz post-quizbtn">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#16224C" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3z"></path></svg>
+        Hacé el quiz y encontrá la tuya
+      </a>
+      <p class="post-quizhint">¿No te convence ninguna? Te armamos otro ranking a tu medida.</p>
+
+      {products.length === 0 ? (
+        <p class="post-empty">
+          {building
+            ? 'Estamos armando el catálogo en vivo… volvé a entrar en unos segundos.'
+            : 'No encontramos notebooks para este tema ahora mismo. Probá otra guía de abajo.'}
+        </p>
+      ) : (
+        <>
+          <!-- TOC -->
+          <section class="post-toc">
+            <div class="toc-h">En esta guía</div>
+            {products.slice(0, 3).map((p, i) => (
+              <a class="toc-row" href={`#item-${i + 1}`}>
+                <span class="toc-label">{i + 1} · {p.title}</span>
+                <span class="toc-price">{p.price != null ? fmt(p.price) : '—'}</span>
+              </a>
+            ))}
+          </section>
+
+          <!-- Ranked cards -->
+          <ol class="post-list">
+            {products.map((p, i) => {
+              const rb = rankMeta(i);
+              return (
+                <li class="pcard" id={`item-${i + 1}`}>
+                  <div class="pcard-top">
+                    <span class={`pcard-rank ${i === 0 ? 'is-gold' : ''}`}>{i + 1}</span>
+                    <span class={`pcard-badge ${rb.cls}`}>{rb.label}</span>
+                  </div>
+                  <div class="pcard-body">
+                    <a href={`/notebook/${p.id}`} class="pcard-img" aria-label={p.title}>
+                      {p.image && <img src={p.image} alt={p.title} width="120" height="90" loading="lazy" decoding="async" />}
+                    </a>
+                    <div class="pcard-info">
+                      <h2 class="pcard-title"><a href={`/notebook/${p.id}`}>{p.title}</a></h2>
+                      {specSummary(p.specs) && <p class="pcard-specs">{specSummary(p.specs)}</p>}
+                      <div class="pcard-priceline">
+                        {p.originalPrice && <span class="pcard-old">{fmt(p.originalPrice)}</span>}
+                        {p.discountPct && p.discountPct >= 5 && <span class="pcard-disc">-{p.discountPct}%</span>}
+                      </div>
+                      <div class="pcard-price">{p.price != null ? fmt(p.price) : PRODUCTO.sin_precio}</div>
+                    </div>
+                  </div>
+                  <p class="pcard-verdict">{idealForSentence(p.specs)}</p>
+                  <a href={p.shortUrl} class="pcard-buy" target="_blank" rel="sponsored noopener noreferrer" data-item-id={p.id} data-item-price={p.price ?? ''}>
+                    Ver precio y condiciones en Mercado Libre
+                  </a>
+                </li>
+              );
+            })}
+          </ol>
+
+          <!-- CTA navy -->
+          <section class="post-cta">
+            <span class="post-cta-blob" aria-hidden="true"></span>
+            <div class="post-cta-h">¿Querés ver más opciones?</div>
+            <p class="post-cta-d">Respondé 5 preguntas rápidas y te mostramos las notebooks que mejor te quedan, con precio actualizado.</p>
+            <a href="/quiz" class="btn btn-primary ctaQuiz post-cta-btn">
+              Empezar el quiz
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16224C" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"></path></svg>
+            </a>
+          </section>
+        </>
+      )}
+
+      <!-- Seguí leyendo -->
+      <section class="post-more">
+        <div class="more-h">Seguí leyendo</div>
+        {related.map((t) => (
+          <a class="more-row" href={`/blog/${t.slug}`}>
+            <span>{t.h1}</span>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFC233" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+          </a>
+        ))}
+      </section>
+
+      <p class="post-disclosure">{PRODUCTO.precio_nota} Algunos enlaces son de afiliado: si comprás, ganamos una comisión sin costo extra para vos.</p>
+    </div>
+  </main>
+
+  <Footer />
+</BaseLayout>
+
+<script>
+  import { trackAffiliateClick } from '../../lib/analytics';
+  document.querySelectorAll<HTMLElement>('[data-item-id]').forEach((el) => {
+    el.addEventListener('click', () => trackAffiliateClick(el.dataset.itemId ?? '', { from: 'blog' }));
+  });
+</script>
+
+<style>
+  .post { padding-top: 64px; background: var(--color-bg-deep); min-height: 100dvh; }
+  .post-wrap { max-width: 460px; margin: 0 auto; padding: var(--space-md) var(--space-md) var(--space-2xl); }
+  .post-crumb { padding: var(--space-sm) 0; font-size: 0.82rem; }
+  .post-crumb a { color: var(--color-blue); font-weight: 600; }
+
+  /* HERO */
+  .post-hero { background: var(--color-navy); color: #fff; border-radius: var(--radius-lg); padding: var(--space-lg) var(--space-lg) var(--space-lg); }
+  .ph-meta { display: flex; align-items: center; gap: 7px; font-size: 0.72rem; color: #9fb0d8; margin-bottom: var(--space-md); }
+  .ph-cat { color: var(--color-amber); font-weight: 700; }
+  .ph-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; letter-spacing: -0.025em; font-size: clamp(1.7rem, 5.5vw, 2.2rem); line-height: 1.05; }
+  .ph-intro { font-size: 0.9rem; color: #b9c2db; line-height: 1.6; margin-top: var(--space-md); }
+  .ph-foot { display: flex; align-items: center; gap: 12px; margin-top: var(--space-lg); font-size: 0.78rem; color: #8b96b8; }
+  .ph-stat { display: inline-flex; align-items: center; gap: 6px; }
+  .ph-dot { width: 3px; height: 3px; border-radius: 50%; background: #56608a; }
+  .ph-share { margin-left: auto; color: var(--color-amber); font-weight: 600; font-size: 0.78rem; padding: 4px 8px; }
+
+  /* CTA quiz button */
+  .post-quizbtn { width: 100%; height: 50px; margin-top: var(--space-md); font-size: 0.98rem; }
+  .post-quizhint { text-align: center; font-size: 0.72rem; color: var(--color-text-soft); margin: 8px 0 var(--space-lg); }
+
+  .post-empty { color: var(--color-text-secondary); padding: var(--space-xl) 0; text-align: center; }
+
+  /* TOC */
+  .post-toc { background: var(--color-card); border: 1px solid var(--color-card-border); border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: var(--space-lg); }
+  .toc-h { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 0.9rem; color: var(--color-navy); margin-bottom: 10px; }
+  .toc-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid #f4f2ec; }
+  .toc-row:last-child { border-bottom: none; }
+  .toc-label { font-size: 0.82rem; color: var(--color-text-primary); }
+  .toc-price { font-size: 0.75rem; color: var(--color-text-muted); white-space: nowrap; }
+
+  /* Ranked cards */
+  .post-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--space-md); }
+  .pcard { background: var(--color-card); border: 1px solid var(--color-card-border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-card); scroll-margin-top: 80px; }
+  .pcard-top { display: flex; align-items: center; gap: 9px; padding: 13px 15px 0; }
+  .pcard-rank { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 50%; background: var(--color-navy); color: #fff; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 0.95rem; }
+  .pcard-rank.is-gold { background: var(--color-amber); color: var(--color-navy); }
+  .pcard-badge { font-size: 0.72rem; font-weight: 700; padding: 3px 9px; border-radius: 6px; }
+  .rb-gold { color: var(--color-navy); background: #FFF3D1; }
+  .rb-blue { color: var(--color-blue); background: #eef2fb; }
+  .rb-green { color: var(--color-green-text); background: var(--color-green-soft); }
+  .rb-muted { color: var(--color-text-soft); background: var(--color-tile); }
+
+  .pcard-body { display: flex; gap: 13px; padding: 12px 15px 14px; }
+  .pcard-img { flex: none; width: 104px; aspect-ratio: 4/3; border-radius: 9px; background: #fff; border: 1px solid #f1efe7; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .pcard-img img { width: 100%; height: 100%; object-fit: contain; padding: 8px; }
+  .pcard-info { flex: 1; min-width: 0; }
+  .pcard-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 0.98rem; line-height: 1.16; }
+  .pcard-title a { color: var(--color-navy); }
+  .pcard-title a:hover { color: var(--color-blue); }
+  .pcard-specs { font-size: 0.74rem; color: var(--color-text-soft); margin: 6px 0 7px; }
+  .pcard-priceline { display: flex; align-items: baseline; gap: 7px; min-height: 14px; }
+  .pcard-old { font-size: 0.72rem; color: var(--color-text-muted); text-decoration: line-through; }
+  .pcard-disc { font-size: 0.72rem; font-weight: 700; color: var(--color-green-text); }
+  .pcard-price { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 1.15rem; color: var(--color-navy); letter-spacing: -0.02em; }
+  .pcard-verdict { font-size: 0.82rem; color: var(--color-text-primary); line-height: 1.55; padding: 0 15px; margin: 0 0 13px; }
+  .pcard-buy { display: block; width: 100%; height: 44px; line-height: 44px; text-align: center; border-top: 1px solid #f1efe7; background: var(--color-blue); color: #fff; font-weight: 700; font-size: 0.8rem; transition: background 0.15s; }
+  .pcard-buy:hover { background: var(--color-blue-hover); }
+
+  /* CTA navy */
+  .post-cta { position: relative; overflow: hidden; background: var(--color-navy); color: #fff; border-radius: var(--radius-lg); padding: var(--space-lg) var(--space-lg); text-align: center; margin: var(--space-lg) 0; }
+  .post-cta-blob { position: absolute; right: -26px; top: -26px; width: 120px; height: 120px; border-radius: 50%; background: rgba(255,194,51,0.14); }
+  .post-cta-h { position: relative; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 1.15rem; }
+  .post-cta-d { position: relative; font-size: 0.82rem; color: #b9c2db; line-height: 1.5; margin: 8px 0 14px; }
+  .post-cta-btn { position: relative; width: 100%; height: 50px; font-size: 1rem; }
+
+  /* Seguí leyendo */
+  .post-more { background: var(--color-navy); color: #fff; border-radius: var(--radius-lg); padding: var(--space-md) var(--space-lg); }
+  .more-h { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 0.9rem; margin-bottom: 8px; }
+  .more-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .more-row:last-child { border-bottom: none; }
+  .more-row span { font-size: 0.82rem; color: #dfe4f0; }
+
+  .post-disclosure { color: var(--color-text-muted); font-size: 0.72rem; line-height: 1.6; margin-top: var(--space-lg); }
+</style>
