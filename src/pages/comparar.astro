@@ -4,6 +4,7 @@ import Header from '../components/layout/Header.astro';
 import Footer from '../components/layout/Footer.astro';
 import { SITE, PRODUCTO } from '../data/copy';
 import { getNotebook } from '../lib/catalog';
+import { allProducts } from '../lib/catalog-data';
 import { buildComparison } from '../shared/compare.mjs';
 import type { NotebookProduct } from '../lib/types';
 
@@ -19,6 +20,11 @@ const products = fetched.filter((p): p is NotebookProduct => Boolean(p));
 const enough = products.length >= 2;
 const { rows, verdicts } = enough ? buildComparison(products) : { rows: [], verdicts: [] };
 
+// Selector: lista liviana (sin precio) para elegir 2 modelos de nuestra base.
+// El precio aparece recién al armar la comparación. `<` evita romper el
+// <script> si algún título tuviera "</".
+const pickList = enough ? '[]' : JSON.stringify(allProducts().map((p) => ({ id: p.id, title: p.title, image: p.image }))).replace(/</g, '\\u003c');
+
 const fmtPrice = (p: NotebookProduct) =>
   p.price != null
     ? new Intl.NumberFormat('es-AR', { style: 'currency', currency: p.currency || 'ARS', maximumFractionDigits: 0 }).format(p.price)
@@ -33,11 +39,13 @@ const fmtPrice = (p: NotebookProduct) =>
       <h1 class="cmp-title">Comparar notebooks</h1>
 
       {!enough ? (
-        <div class="cmp-empty">
-          <p class="empty-emoji">⚖️</p>
-          <p>Elegí al menos 2 notebooks para comparar (tildá "Comparar" en los resultados).</p>
-          <a href="/quiz/general" class="btn btn-primary">Ir al quiz</a>
-        </div>
+        <section class="picker">
+          <p class="picker-lead">Elegí <b>2 modelos</b> de nuestra base y te los comparamos lado a lado. Buscá por marca o modelo.</p>
+          <input id="picker-search" class="picker-search" type="search" placeholder="Ej: Lenovo, MacBook, Ryzen 7…" autocomplete="off" />
+          <div id="picker-grid" class="picker-grid"></div>
+          <p id="picker-empty" class="picker-none" hidden>No encontramos ese modelo. Probá con otra marca o palabra.</p>
+          <script type="application/json" id="picker-data" is:inline set:html={pickList}></script>
+        </section>
       ) : (
         <>
           {verdicts.length > 0 && (
@@ -91,11 +99,24 @@ const fmtPrice = (p: NotebookProduct) =>
           </section>
 
           <p class="cmp-note">{PRODUCTO.precio_nota} Lo resaltado (✓) es lo mejor de cada fila.</p>
-          <div class="cmp-actions"><a href="/quiz/general" class="btn btn-secondary">🔄 Volver al quiz</a></div>
+          <div class="cmp-actions">
+            <a href="/comparar" class="btn btn-secondary">🔄 Comparar otras</a>
+            <a href="/quiz" class="btn btn-ghost">Hacer el test</a>
+          </div>
         </>
       )}
     </div>
   </main>
+
+  {!enough && (
+    <div class="picker-bar" id="picker-bar" hidden>
+      <span class="picker-count" id="picker-count">0 de 2 elegidas</span>
+      <div class="picker-bar-actions">
+        <button class="btn btn-ghost" id="picker-clear" type="button">Limpiar</button>
+        <a class="btn btn-primary" id="picker-go" href="#">Comparar →</a>
+      </div>
+    </div>
+  )}
 
   <Footer />
 </BaseLayout>
@@ -105,6 +126,78 @@ const fmtPrice = (p: NotebookProduct) =>
   document.querySelectorAll<HTMLElement>('[data-item-id]').forEach((el) => {
     el.addEventListener('click', () => trackAffiliateClick(el.dataset.itemId ?? '', { from: 'compare' }));
   });
+</script>
+
+<script>
+  // Selector de 2 modelos (solo está presente en la vista sin ids).
+  type Pick = { id: string; title: string; image: string };
+  const dataEl = document.getElementById('picker-data');
+  if (dataEl) {
+    const CATALOG: Pick[] = JSON.parse(dataEl.textContent || '[]');
+    const grid = document.getElementById('picker-grid')!;
+    const search = document.getElementById('picker-search') as HTMLInputElement;
+    const emptyEl = document.getElementById('picker-empty')!;
+    const bar = document.getElementById('picker-bar')!;
+    const countEl = document.getElementById('picker-count')!;
+    const goEl = document.getElementById('picker-go') as HTMLAnchorElement;
+    const selected: Pick[] = [];
+
+    const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c] as string));
+    const isSel = (id: string) => selected.some((s) => s.id === id);
+
+    function listFor(q: string): Pick[] {
+      if (!q) return CATALOG.slice(0, 24);
+      const n = q.toLowerCase();
+      return CATALOG.filter((p) => p.title.toLowerCase().includes(n)).slice(0, 30);
+    }
+
+    function render() {
+      const list = listFor(search.value.trim());
+      grid.innerHTML = list
+        .map(
+          (p) => `<button type="button" class="pick-item${isSel(p.id) ? ' is-sel' : ''}" data-id="${p.id}">
+            <img src="${p.image}" alt="" loading="lazy" />
+            <span class="pick-name">${esc(p.title)}</span>
+          </button>`,
+        )
+        .join('');
+      emptyEl.hidden = list.length > 0;
+    }
+
+    function refreshBar() {
+      countEl.textContent = `${selected.length} de 2 elegidas`;
+      const ready = selected.length === 2;
+      goEl.href = ready ? `/comparar?ids=${selected.map((s) => s.id).join(',')}` : '#';
+      goEl.style.pointerEvents = ready ? 'auto' : 'none';
+      goEl.style.opacity = ready ? '1' : '0.45';
+      bar.hidden = selected.length === 0;
+    }
+
+    grid.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest('.pick-item') as HTMLElement | null;
+      if (!btn) return;
+      const id = btn.dataset.id!;
+      const idx = selected.findIndex((s) => s.id === id);
+      if (idx >= 0) selected.splice(idx, 1);
+      else {
+        if (selected.length >= 2) return; // máximo 2
+        const p = CATALOG.find((x) => x.id === id);
+        if (p) selected.push(p);
+      }
+      render();
+      refreshBar();
+    });
+
+    search.addEventListener('input', render);
+    document.getElementById('picker-clear')?.addEventListener('click', () => {
+      selected.length = 0;
+      render();
+      refreshBar();
+    });
+
+    render();
+    refreshBar();
+  }
 </script>
 
 <style>
@@ -141,5 +234,35 @@ const fmtPrice = (p: NotebookProduct) =>
   .cmp-best { color: var(--color-navy); font-weight: 800; background: rgba(255,194,51,0.20); }
   .cmp-tick { color: var(--color-green); margin-left: 6px; }
   .cmp-note { font-size: 0.75rem; color: var(--color-text-muted); margin-top: var(--space-md); text-align: center; }
-  .cmp-actions { display: flex; justify-content: center; margin-top: var(--space-lg); }
+  .cmp-actions { display: flex; gap: var(--space-md); justify-content: center; margin-top: var(--space-lg); flex-wrap: wrap; }
+
+  /* ── Selector de 2 modelos (vista sin ids) ── */
+  .picker { display: flex; flex-direction: column; gap: var(--space-md); }
+  .picker-lead { text-align: center; color: var(--color-text-secondary); line-height: 1.5; }
+  .picker-search { width: 100%; padding: 13px 16px; border-radius: var(--radius-md); border: 1.5px solid var(--color-card-border); font-size: 0.95rem; background: var(--color-card); color: var(--color-text-primary); }
+  .picker-search:focus { outline: none; border-color: var(--color-blue); box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
+  .picker-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .picker-grid :global(.pick-item) {
+    display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px;
+    background: var(--color-card); border: 1.5px solid var(--color-card-border); border-radius: var(--radius-md);
+    cursor: pointer; text-align: center; transition: border-color .15s, box-shadow .15s;
+  }
+  .picker-grid :global(.pick-item:hover) { border-color: var(--color-blue); }
+  .picker-grid :global(.pick-item img) { width: 100%; aspect-ratio: 4 / 3; object-fit: contain; background: #fff; border-radius: 6px; }
+  .picker-grid :global(.pick-name) { font-size: 0.74rem; font-weight: 600; color: var(--color-text-primary); line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .picker-grid :global(.pick-item.is-sel) { border-color: var(--color-blue); box-shadow: 0 0 0 2px var(--color-blue); }
+  .picker-none { text-align: center; color: var(--color-text-muted); font-size: 0.9rem; padding: var(--space-md) 0; }
+
+  .picker-bar {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 90;
+    display: flex; align-items: center; justify-content: space-between; gap: var(--space-md);
+    max-width: 760px; margin: 0 auto var(--space-md); padding: 12px 14px 12px 20px;
+    background: var(--color-navy); color: #fff; border-radius: var(--radius-pill);
+    box-shadow: 0 12px 30px rgba(22,34,76,0.35);
+  }
+  .picker-count { font-weight: 700; font-size: 0.9rem; }
+  .picker-bar-actions { display: flex; gap: var(--space-sm); align-items: center; }
+  .picker-bar .btn-ghost { color: rgba(255,255,255,0.75); }
+  .picker-bar .btn-ghost:hover { color: #fff; }
+  @media (max-width: 640px) { .picker-bar { left: 10px; right: 10px; } }
 </style>

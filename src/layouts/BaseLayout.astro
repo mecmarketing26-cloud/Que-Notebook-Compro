@@ -19,8 +19,11 @@ const {
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 const ogImageURL = new URL(ogImage, Astro.site);
 
-// GA4 Measurement ID — reemplazá por el tuyo (el snippet se activa solo).
-const GA4_ID = 'G-XXXXXXXXXX';
+// IDs de medición. Cada snippet se activa solo cuando el ID no es un placeholder.
+// GTM administra los tags; GA4 directo (gtag) además hace que el evento
+// affiliate_click de analytics.ts llegue a GA4 aunque GTM aún no esté configurado.
+const GA4_ID: string = 'G-X4F7RPS2LX';
+const GTM_ID: string = 'GTM-K7L9C4SF';
 ---
 
 <!doctype html>
@@ -61,6 +64,13 @@ const GA4_ID = 'G-XXXXXXXXXX';
       window.dataLayer = window.dataLayer || [];
     </script>
 
+    {GTM_ID !== 'GTM-XXXXXXX' && (
+      <!-- Google Tag Manager -->
+      <script is:inline define:vars={{ gtmId: GTM_ID }}>
+        (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer',gtmId);
+      </script>
+    )}
+
     {GA4_ID !== 'G-XXXXXXXXXX' && (
       <>
         <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${GA4_ID}`} />
@@ -73,6 +83,9 @@ const GA4_ID = 'G-XXXXXXXXXX';
     )}
   </head>
   <body>
+    {GTM_ID !== 'GTM-XXXXXXX' && (
+      <noscript set:html={`<iframe src="https://www.googletagmanager.com/ns.html?id=${GTM_ID}" height="0" width="0" style="display:none;visibility:hidden"></iframe>`} />
+    )}
     <slot />
   </body>
 </html>

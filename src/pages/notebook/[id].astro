@@ -178,19 +178,20 @@ const jsonLd = JSON.stringify({
   }
   .product-media img { width: 100%; height: auto; object-fit: contain; border-radius: var(--radius-md); }
 
-  .product-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; letter-spacing: -0.02em; color: var(--color-navy); font-size: 1.6rem; line-height: 1.2; margin-bottom: var(--space-sm); }
+  .product-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; letter-spacing: -0.02em; color: var(--color-navy); font-size: 1.6rem; line-height: 1.2; margin-bottom: var(--space-sm); text-align: center; }
 
-  .use-tags { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; padding: 0; margin: 0 0 var(--space-md); }
+  .use-tags { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; padding: 0; margin: 0 0 var(--space-md); justify-content: center; }
   .use-tag { font-size: 0.72rem; font-weight: 600; color: var(--color-blue); background: #eef2fb; border: 1px solid #dde6fb; border-radius: var(--radius-pill); padding: 4px 11px; }
 
-  .product-price { display: flex; flex-direction: column; gap: 2px; }
+  /* Bloque de precio: centrado y con su propia caja, para que no toque los bordes. */
+  .product-price { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: var(--space-md) var(--space-sm) var(--space-sm); }
   .price-old-row { display: flex; align-items: center; gap: 10px; }
   .price-old { color: var(--color-text-muted); text-decoration: line-through; font-size: 1rem; }
   .price-off { color: var(--color-green-text); font-weight: 800; font-size: 0.85rem; background: var(--color-green-soft); border-radius: 6px; padding: 2px 9px; }
   .price-now-row { display: flex; align-items: baseline; gap: 8px; }
   .price-from { color: var(--color-text-secondary); font-size: 0.85rem; }
   .price-tag.big { font-size: 2.1rem; }
-  .price-note { color: var(--color-text-muted); font-size: 0.75rem; margin: 4px 0 var(--space-lg); }
+  .price-note { color: var(--color-text-muted); font-size: 0.75rem; margin: 4px 0 var(--space-lg); text-align: center; }
   .product-desc { color: var(--color-text-secondary); line-height: 1.6; margin-bottom: var(--space-sm); }
   .product-ideal { color: var(--color-text-primary); font-weight: 600; margin-bottom: var(--space-lg); }
 
@@ -206,8 +207,9 @@ const jsonLd = JSON.stringify({
   .spec-table th { color: var(--color-text-muted); font-weight: 500; width: 42%; }
   .spec-table td { color: var(--color-text-navy); font-weight: 600; }
 
-  .buy-btn { width: 100%; padding: 16px; font-size: 1rem; }
-  .product-disclosure { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 0.72rem; color: var(--color-text-muted); margin-top: var(--space-md); }
+  .buy-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; max-width: 340px; margin: 0 auto; padding: 14px 22px; font-size: 0.95rem; }
+  .share-full { display: flex; max-width: 340px; margin-left: auto; margin-right: auto; }
+  .product-disclosure { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; font-size: 0.72rem; color: var(--color-text-muted); margin-top: var(--space-md); text-align: center; }
 
   @media (max-width: 768px) {
     .product-inner { grid-template-columns: 1fr; gap: var(--space-lg); }
