@@ -199,20 +199,24 @@ const fmt = (n: number) => new Intl.NumberFormat('es-AR', { style: 'currency', c
 
   /* Compare bar */
   .compare-bar {
-    position: fixed; bottom: 0; left: 0; right: 0; z-index: 90;
-    display: flex; align-items: center; justify-content: space-between; gap: var(--space-md);
-    max-width: 760px; margin: 0 auto var(--space-md); padding: 12px 14px 12px 20px;
+    position: fixed; bottom: 0; left: 10px; right: 10px; z-index: 90;
+    box-sizing: border-box; max-width: min(760px, 100%);
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    margin: 0 auto var(--space-md); padding: 12px 14px 12px 18px;
     background: var(--color-navy); border: 1px solid var(--color-navy); color: #fff;
     border-radius: var(--radius-pill); box-shadow: 0 12px 30px rgba(22,34,76,0.35);
   }
-  .compare-count { font-weight: 700; font-size: 0.9rem; color: #fff; }
-  .compare-actions { display: flex; gap: var(--space-sm); align-items: center; }
+  /* El contador se achica con puntos suspensivos para que los botones siempre entren. */
+  .compare-count { flex: 1; min-width: 0; font-weight: 700; font-size: 0.9rem; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .compare-actions { flex: none; display: flex; gap: var(--space-sm); align-items: center; }
   .compare-bar .btn-ghost { color: rgba(255,255,255,0.75); }
   .compare-bar .btn-ghost:hover { color: #fff; }
 
   @media (max-width: 640px) {
     .result-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
     .result-actions { flex-direction: column; align-items: stretch; }
-    .compare-bar { left: 10px; right: 10px; }
+    .compare-bar { gap: 8px; padding: 10px 10px 10px 14px; }
+    .compare-bar .btn { padding: 8px 12px; font-size: 0.82rem; }
+    .compare-count { font-size: 0.82rem; }
   }
 </style>

@@ -49,7 +49,8 @@ const { showDisclosure = true } = Astro.props;
     border-top: 1px solid var(--color-card-border);
     background: var(--color-bg-deep);
     padding: var(--space-2xl) var(--space-lg) var(--space-xl);
-    margin-top: var(--space-3xl);
+    /* Sin margin-top: el border-top + padding-top ya separan. El margin dejaba
+       un hueco grande (se veía el fondo del body entre home y footer). */
   }
 
   .footer-inner {

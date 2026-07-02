@@ -254,15 +254,20 @@ const fmtPrice = (p: NotebookProduct) =>
   .picker-none { text-align: center; color: var(--color-text-muted); font-size: 0.9rem; padding: var(--space-md) 0; }
 
   .picker-bar {
-    position: fixed; bottom: 0; left: 0; right: 0; z-index: 90;
-    display: flex; align-items: center; justify-content: space-between; gap: var(--space-md);
-    max-width: 760px; margin: 0 auto var(--space-md); padding: 12px 14px 12px 20px;
+    position: fixed; bottom: 0; left: 10px; right: 10px; z-index: 90;
+    box-sizing: border-box; max-width: min(760px, 100%);
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    margin: 0 auto var(--space-md); padding: 12px 14px 12px 18px;
     background: var(--color-navy); color: #fff; border-radius: var(--radius-pill);
     box-shadow: 0 12px 30px rgba(22,34,76,0.35);
   }
-  .picker-count { font-weight: 700; font-size: 0.9rem; }
-  .picker-bar-actions { display: flex; gap: var(--space-sm); align-items: center; }
+  .picker-count { flex: 1; min-width: 0; font-weight: 700; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .picker-bar-actions { flex: none; display: flex; gap: var(--space-sm); align-items: center; }
   .picker-bar .btn-ghost { color: rgba(255,255,255,0.75); }
   .picker-bar .btn-ghost:hover { color: #fff; }
-  @media (max-width: 640px) { .picker-bar { left: 10px; right: 10px; } }
+  @media (max-width: 640px) {
+    .picker-bar { gap: 8px; padding: 10px 10px 10px 14px; }
+    .picker-bar .btn { padding: 8px 12px; font-size: 0.82rem; }
+    .picker-count { font-size: 0.82rem; }
+  }
 </style>

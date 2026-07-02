@@ -4,10 +4,23 @@ import Header from '../../components/layout/Header.astro';
 import Footer from '../../components/layout/Footer.astro';
 import { SITE } from '../../data/copy';
 import { BLOG_TOPICS, categoryFor } from '../../data/blog';
+import { allProducts } from '../../lib/catalog-data';
+import { recommend } from '../../shared/filter-engine.mjs';
 
 export const prerender = true;
 
 const [featured, ...rest] = BLOG_TOPICS;
+
+// Portada = imagen del equipo #1 del ranking de ese tema. Se calcula en build
+// desde el snapshot (sin llamadas a la API). Si no hay, queda un fallback prolijo.
+function coverFor(topic: (typeof BLOG_TOPICS)[number]): string | null {
+  let pool = allProducts();
+  if (topic.match) pool = pool.filter(topic.match);
+  const { products } = recommend(pool, topic.filters, { min: 1, max: 1 });
+  return products[0]?.image ?? null;
+}
+const featuredCover = coverFor(featured);
+const restCards = rest.map((t) => ({ ...t, cover: coverFor(t) }));
 ---
 
 <BaseLayout
@@ -44,7 +57,9 @@ const [featured, ...rest] = BLOG_TOPICS;
       <!-- Cards -->
       <div class="bi-grid">
         <a href={`/blog/${featured.slug}`} class="bi-featured lift">
-          <span class="bi-ph bi-ph-feat" aria-hidden="true"></span>
+          {featuredCover
+            ? <img class="bi-img bi-img-feat" src={featuredCover} alt="" width="96" height="96" loading="lazy" decoding="async" />
+            : <span class="bi-ph bi-ph-feat" aria-hidden="true"></span>}
           <div class="bi-feat-body">
             <span class="bi-badge">Más leída</span>
             <div class="bi-feat-title">{featured.h1}</div>
@@ -55,9 +70,11 @@ const [featured, ...rest] = BLOG_TOPICS;
           </div>
         </a>
 
-        {rest.map((t) => (
+        {restCards.map((t) => (
           <a href={`/blog/${t.slug}`} class="bi-card lift">
-            <span class="bi-ph bi-ph-card" aria-hidden="true"></span>
+            {t.cover
+              ? <img class="bi-img bi-img-card" src={t.cover} alt="" loading="lazy" decoding="async" />
+              : <span class="bi-ph bi-ph-card" aria-hidden="true"></span>}
             <div class="bi-card-body">
               <span class="bi-card-cat">{categoryFor(t.slug)}</span>
               <div class="bi-card-h">{t.h1}</div>
@@ -92,13 +109,18 @@ const [featured, ...rest] = BLOG_TOPICS;
   /* Grid */
   .bi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
-  .bi-ph { display: block; background: repeating-linear-gradient(135deg, #f1efe8, #f1efe8 7px, #e8e5dc 7px, #e8e5dc 14px); }
+  /* Portadas reales (imagen del equipo #1) */
+  .bi-img-feat { flex: none; width: 96px; height: 96px; object-fit: contain; background: #fff; border-radius: 10px; padding: 6px; }
+  .bi-img-card { width: 100%; aspect-ratio: 16 / 10; object-fit: contain; background: #fff; border-bottom: 1px solid var(--color-card-border); padding: 8px; }
+
+  /* Fallback prolijo (solo si falta imagen): tono sólido, sin rayas */
+  .bi-ph { display: block; background: var(--color-tile); }
   .bi-ph-feat { flex: none; width: 96px; aspect-ratio: 1; border-radius: 10px; }
   .bi-ph-card { width: 100%; aspect-ratio: 16/10; }
 
   /* Featured (navy horizontal) */
   .bi-featured { grid-column: 1 / -1; display: flex; gap: 13px; padding: 15px; background: var(--color-navy); color: #fff; border-radius: var(--radius-md); overflow: hidden; }
-  .bi-ph-feat { background: repeating-linear-gradient(135deg, #1d2a57, #1d2a57 7px, #243465 7px, #243465 14px); }
+  .bi-featured .bi-ph-feat { background: #243465; }
   .bi-feat-body { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
   .bi-badge { align-self: flex-start; font-size: 0.62rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.02em; color: var(--color-navy); background: var(--color-amber); padding: 3px 9px; border-radius: 6px; }
   .bi-feat-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 1rem; line-height: 1.12; margin: 8px 0 6px; }

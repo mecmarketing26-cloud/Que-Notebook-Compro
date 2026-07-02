@@ -4,7 +4,7 @@
   flex-direction: column;
   width: 100%;
   max-width: 460px;
-  min-height: 640px;
+  min-height: 0; /* en mobile lo estira .quiz-main (align stretch); antes 640px fijo cortaba el botón */
   margin: 0 auto;
   background: var(--color-navy);
   color: #fff;
@@ -74,8 +74,8 @@
   margin: 14px 0 0;
 }
 
-/* Options */
-.quiz-options-wrap { flex: 1; padding: 18px 22px 8px; }
+/* Options — área flexible; scrollea si el contenido no entra, para que el pie no se corte */
+.quiz-options-wrap { flex: 1; min-height: 0; overflow-y: auto; padding: 18px 22px 8px; }
 .quiz-opts { display: grid; gap: 10px; }
 .qopt {
   position: relative;
@@ -118,8 +118,8 @@
 .qopt-sub { font-size: 0.72rem; color: rgba(255, 255, 255, 0.72); margin-top: 3px; line-height: 1.3; }
 .qopt-check { position: relative; flex: none; display: flex; }
 
-/* Foot */
-.quiz-foot { padding: 14px 22px 22px; }
+/* Foot — anclado abajo, nunca se comprime (el botón siempre visible) */
+.quiz-foot { flex: none; padding: 14px 22px 22px; }
 .quiz-next {
   width: 100%;
   height: 54px;

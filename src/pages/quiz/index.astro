@@ -32,7 +32,8 @@ export const prerender = true;
 </BaseLayout>
 
 <style>
-  .quiz-page { min-height: 100dvh; background: var(--color-bg-deep); display: flex; flex-direction: column; }
+  /* 100dvh (dynamic viewport) para respetar las barras del navegador mobile. */
+  .quiz-page { height: 100dvh; background: var(--color-bg-deep); display: flex; flex-direction: column; overflow: hidden; }
   .quiz-brandbar {
     display: flex; align-items: center; justify-content: space-between;
     max-width: 460px; width: 100%; margin: 0 auto; padding: 16px var(--space-md) 8px;
@@ -43,8 +44,15 @@ export const prerender = true;
   .quiz-exit { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 10px; color: var(--color-text-soft); background: rgba(0,0,0,0.04); transition: color 0.15s, background 0.15s; }
   .quiz-exit:hover { color: var(--color-navy); background: rgba(0,0,0,0.07); }
 
-  .quiz-main { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: var(--space-sm) var(--space-md) var(--space-lg); }
-  .quiz-legal { text-align: center; padding: 0 0 var(--space-xl); }
+  /* El panel llena el alto disponible en mobile (align stretch); el botón queda
+     anclado abajo y las opciones scrollean si hiciera falta. */
+  .quiz-main { flex: 1; min-height: 0; display: flex; align-items: stretch; justify-content: center; padding: var(--space-sm) var(--space-md) var(--space-md); }
+  .quiz-legal { flex: none; text-align: center; padding: 6px 0 max(10px, env(safe-area-inset-bottom)); }
   .quiz-legal a { font-size: 0.78rem; color: var(--color-text-muted); font-weight: 500; }
   .quiz-legal a:hover { color: var(--color-navy); }
+
+  /* En pantallas grandes vuelve a ser una "tarjeta" centrada, no full-height. */
+  @media (min-width: 540px) and (min-height: 760px) {
+    .quiz-main { align-items: center; padding-top: var(--space-md); }
+  }
 </style>
