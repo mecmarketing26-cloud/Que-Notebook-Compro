@@ -1,4 +1,14 @@
 {
+  "MLA1066172675": {
+    "short_url": "https://meli.la/19kGWw6",
+    "regex": "H4QEWP-HV8F",
+    "minted_at": "2026-07-01T10:54:34.218Z"
+  },
+  "MLA1066172676": {
+    "short_url": "https://meli.la/2dBU32c",
+    "regex": "H4QEWP-0509",
+    "minted_at": "2026-06-30T10:42:54.279Z"
+  },
   "MLA1066172677": {
     "short_url": "https://meli.la/2JLRNAU",
     "regex": "H4QEWP-97CU",
@@ -13,6 +23,11 @@
     "short_url": "https://meli.la/1vsN6AJ",
     "regex": "H4QEWP-9366",
     "minted_at": "2026-06-29T00:31:54.675Z"
+  },
+  "MLA1066172744": {
+    "short_url": "https://meli.la/2XGJbAN",
+    "regex": "H4QEWP-N9PD",
+    "minted_at": "2026-07-02T10:51:00.550Z"
   },
   "MLA15349021": {
     "short_url": null,
@@ -344,6 +359,11 @@
     "ineligible": true,
     "reason": "http_400",
     "checked_at": "2026-06-21T22:31:56.127Z"
+  },
+  "MLA24077011": {
+    "short_url": "https://meli.la/1htfVcQ",
+    "regex": "H4QEWP-KS1E",
+    "minted_at": "2026-07-02T10:56:27.029Z"
   },
   "MLA24162954": {
     "short_url": null,
@@ -772,6 +792,11 @@
     "reason": "http_400",
     "checked_at": "2026-06-21T22:31:15.263Z"
   },
+  "MLA40554081": {
+    "short_url": "https://meli.la/1HL4KkR",
+    "regex": "H4QEWP-6R05",
+    "minted_at": "2026-07-02T10:51:05.077Z"
+  },
   "MLA40588469": {
     "short_url": "https://meli.la/2XYJ54q",
     "regex": "H4QEWP-R3D9",
@@ -802,6 +827,11 @@
     "short_url": "https://meli.la/19vwVKX",
     "regex": "H4QEWP-9NB8",
     "minted_at": "2026-06-21T22:36:24.507Z"
+  },
+  "MLA41461289": {
+    "short_url": "https://meli.la/1h3ozeE",
+    "regex": "H4QEWP-W3GS",
+    "minted_at": "2026-07-01T10:54:37.375Z"
   },
   "MLA41461422": {
     "short_url": "https://meli.la/1pTabv7",
@@ -1354,6 +1384,11 @@
     "regex": "H4QEWP-0T4X",
     "minted_at": "2026-06-21T22:39:04.451Z"
   },
+  "MLA53091456": {
+    "short_url": "https://meli.la/23PayUm",
+    "regex": "H4QEWP-FGQ3",
+    "minted_at": "2026-07-01T11:00:39.724Z"
+  },
   "MLA53091838": {
     "short_url": "https://meli.la/1yg4nCo",
     "regex": "H4QEWP-4N4Z",
@@ -1442,6 +1477,12 @@
     "regex": "H4QEWP-U72Z",
     "minted_at": "2026-06-21T01:16:42.113Z"
   },
+  "MLA54098729": {
+    "short_url": null,
+    "ineligible": true,
+    "reason": "http_400",
+    "checked_at": "2026-06-30T10:48:48.155Z"
+  },
   "MLA54098731": {
     "short_url": "https://meli.la/127o8xC",
     "regex": "H4QEWP-PCT6",
@@ -1483,6 +1524,11 @@
     "short_url": "https://meli.la/2XEDwPD",
     "regex": "H4QEWP-GAF3",
     "minted_at": "2026-06-21T22:43:25.699Z"
+  },
+  "MLA54464382": {
+    "short_url": "https://meli.la/2sKRmkE",
+    "regex": "H4QEWP-3B18",
+    "minted_at": "2026-07-02T10:54:46.453Z"
   },
   "MLA54467144": {
     "short_url": "https://meli.la/11Z8xyy",
@@ -1920,6 +1966,17 @@
     "regex": "H4QEWP-MCQ1",
     "minted_at": "2026-06-21T22:26:25.382Z"
   },
+  "MLA63456711": {
+    "short_url": "https://meli.la/2gP7sa6",
+    "regex": "H4QEWP-197M",
+    "minted_at": "2026-07-01T11:00:20.914Z"
+  },
+  "MLA63580375": {
+    "short_url": null,
+    "ineligible": true,
+    "reason": "http_400",
+    "checked_at": "2026-06-30T10:48:40.339Z"
+  },
   "MLA63611246": {
     "short_url": "https://meli.la/34cBKH1",
     "regex": "H4QEWP-EPL5",
@@ -2142,6 +2199,11 @@
     "regex": "H4QEWP-51UJ",
     "minted_at": "2026-06-21T22:34:56.913Z"
   },
+  "MLA65697857": {
+    "short_url": "https://meli.la/1FRLiVo",
+    "regex": "H4QEWP-S16Y",
+    "minted_at": "2026-07-02T10:51:03.527Z"
+  },
   "MLA65841172": {
     "short_url": "https://meli.la/1xJFQ36",
     "regex": "H4QEWP-TJSZ",
@@ -2161,6 +2223,11 @@
     "short_url": "https://meli.la/1uHiryt",
     "regex": "H4QEWP-GZQ4",
     "minted_at": "2026-06-29T00:31:57.829Z"
+  },
+  "MLA65915278": {
+    "short_url": "https://meli.la/1761BFn",
+    "regex": "H4QEWP-A3XT",
+    "minted_at": "2026-07-01T10:54:35.818Z"
   },
   "MLA65916147": {
     "short_url": "https://meli.la/159aHHC",
@@ -2403,6 +2470,11 @@
     "regex": "H4QEWP-CV4U",
     "minted_at": "2026-06-21T22:43:12.863Z"
   },
+  "MLA69124474": {
+    "short_url": "https://meli.la/1Afnohr",
+    "regex": "H4QEWP-4G9H",
+    "minted_at": "2026-06-30T10:42:57.630Z"
+  },
   "MLA69170808": {
     "short_url": "https://meli.la/1Ky2NBQ",
     "regex": "H4QEWP-861A",
@@ -2443,6 +2515,11 @@
     "regex": "H4QEWP-R0DZ",
     "minted_at": "2026-06-21T01:15:11.650Z"
   },
+  "MLA69578107": {
+    "short_url": "https://meli.la/1zypz3Q",
+    "regex": "H4QEWP-MTC6",
+    "minted_at": "2026-06-30T10:47:15.927Z"
+  },
   "MLA69698876": {
     "short_url": "https://meli.la/2gbGiP4",
     "regex": "H4QEWP-Z6E4",
@@ -2452,6 +2529,11 @@
     "short_url": "https://meli.la/1ZmC1pA",
     "regex": "H4QEWP-BEYL",
     "minted_at": "2026-06-21T01:14:54.785Z"
+  },
+  "MLA69701867": {
+    "short_url": "https://meli.la/1LjZAZQ",
+    "regex": "H4QEWP-QUNM",
+    "minted_at": "2026-07-02T10:51:02.007Z"
   },
   "MLA69724840": {
     "short_url": "https://meli.la/2dq8Q21",
@@ -2583,15 +2665,30 @@
     "regex": "H4QEWP-PWB6",
     "minted_at": "2026-06-21T22:39:55.311Z"
   },
+  "MLA70468329": {
+    "short_url": "https://meli.la/2eyZ96p",
+    "regex": "H4QEWP-MUYM",
+    "minted_at": "2026-07-01T11:00:54.468Z"
+  },
   "MLA70480281": {
     "short_url": "https://meli.la/2dL9VDP",
     "regex": "H4QEWP-K19V",
     "minted_at": "2026-06-25T21:17:46.791Z"
   },
+  "MLA70481830": {
+    "short_url": "https://meli.la/2SZHyVr",
+    "regex": "H4QEWP-32W7",
+    "minted_at": "2026-07-01T11:00:57.610Z"
+  },
   "MLA70508715": {
     "short_url": "https://meli.la/33F3u36",
     "regex": "H4QEWP-DN8A",
     "minted_at": "2026-06-21T22:43:36.987Z"
+  },
+  "MLA70537989": {
+    "short_url": "https://meli.la/1RPc32X",
+    "regex": "H4QEWP-SMVZ",
+    "minted_at": "2026-07-01T11:00:37.843Z"
   },
   "MLA70542805": {
     "short_url": "https://meli.la/2Cyi75d",
@@ -2602,6 +2699,11 @@
     "short_url": "https://meli.la/24SW7pd",
     "regex": "H4QEWP-3FJU",
     "minted_at": "2026-06-21T01:12:55.974Z"
+  },
+  "MLA70653229": {
+    "short_url": "https://meli.la/2XPaQbL",
+    "regex": "H4QEWP-3LC1",
+    "minted_at": "2026-06-30T10:42:55.776Z"
   },
   "MLA70735445": {
     "short_url": "https://meli.la/2zYbiY2",
@@ -2618,6 +2720,11 @@
     "regex": "H4QEWP-S9JH",
     "minted_at": "2026-06-21T22:26:48.457Z"
   },
+  "MLA73080506": {
+    "short_url": "https://meli.la/1X9uakg",
+    "regex": "H4QEWP-1YXQ",
+    "minted_at": "2026-06-29T12:46:07.933Z"
+  },
   "MLA73173529": {
     "short_url": "https://meli.la/33QsRHG",
     "regex": "H4QEWP-D7MT",
@@ -2627,6 +2734,11 @@
     "short_url": "https://meli.la/2xshMpa",
     "regex": "H4QEWP-TBG4",
     "minted_at": "2026-06-29T00:38:19.960Z"
+  },
+  "MLA74349722": {
+    "short_url": "https://meli.la/1SSoaCK",
+    "regex": "H4QEWP-7FXB",
+    "minted_at": "2026-07-01T11:00:23.675Z"
   },
   "MLA74544693": {
     "short_url": "https://meli.la/29FtMfS",
