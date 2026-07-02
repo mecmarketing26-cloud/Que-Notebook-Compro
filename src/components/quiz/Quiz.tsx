@@ -265,12 +265,12 @@ export default function Quiz() {
   }, []);
 
   if (phase === 'loading') {
-    return <div class="quiz-panel quiz-loading" aria-busy="true"><span class="quiz-spin" /></div>;
+    return <div class="quiz-panel quiz-loading" aria-busy="true" data-quiz-stage="loading"><span class="quiz-spin" /></div>;
   }
 
   if (phase === 'resume') {
     return (
-      <div class="quiz-panel quiz-resume">
+      <div class="quiz-panel quiz-resume" data-quiz-stage="resume">
         <div class="qr-ico"><Icon k="guiado" /></div>
         <h2 class="qr-title">Ya hiciste el test</h2>
         <p class="qr-sub">¿Querés ver los resultados que te dimos o preferís volver a hacerlo desde cero?</p>
@@ -288,9 +288,15 @@ export default function Quiz() {
   if (!current) return null;
 
   return (
-    <div class="quiz-panel">
+    <div
+      class={`quiz-panel quiz-stage-${current.key}`}
+      data-quiz-stage={current.key}
+      data-step-index={i + 1}
+      data-step-total={totalShown}
+      data-quiz-mode={picks.modo ?? ''}
+    >
       <div class="quiz-top">
-        <button class="quiz-back" onClick={goBack} type="button" aria-label="Atrás" style={{ opacity: i === 0 ? 0.25 : 1 }} disabled={i === 0}>
+        <button class="quiz-back" data-quiz-action="back" data-quiz-stage={current.key} onClick={goBack} type="button" aria-label="Atrás" style={{ opacity: i === 0 ? 0.25 : 1 }} disabled={i === 0}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
         </button>
         <div class="quiz-track"><div class="quiz-fill" style={{ width: `${progress}%` }} /></div>
@@ -308,7 +314,7 @@ export default function Quiz() {
           {current.options.map((opt) => {
             const on = answer === opt.v;
             return (
-              <button key={opt.v} class={`qopt ${on ? 'is-on' : ''}`} type="button" onClick={() => pick(current.key, opt.v)}>
+              <button key={opt.v} class={`qopt ${on ? 'is-on' : ''}`} type="button" data-quiz-stage={current.key} data-opt-value={opt.v} onClick={() => pick(current.key, opt.v)}>
                 {on && <span class="qopt-ring" aria-hidden="true" />}
                 <span class="qopt-ico"><Icon k={opt.v} /></span>
                 <span class="qopt-text">
@@ -327,7 +333,7 @@ export default function Quiz() {
       </div>
 
       <div class="quiz-foot">
-        <button class={`quiz-next ${ready ? 'is-ready' : ''}`} onClick={goNext} disabled={!ready} type="button">
+        <button class={`quiz-next ${ready ? 'is-ready' : ''}`} data-quiz-action={last ? 'complete' : 'next'} data-quiz-stage={current.key} onClick={goNext} disabled={!ready} type="button">
           {last ? 'Ver mis notebooks' : 'Siguiente'}
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"></path></svg>
         </button>

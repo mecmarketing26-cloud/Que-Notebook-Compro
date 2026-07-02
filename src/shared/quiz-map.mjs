@@ -59,13 +59,14 @@ const A = {
 const B = {
   uso: {
     // Estudio/oficina: 8 GB + SSD alcanza; piso para evitar los Celeron 4 GB lentos.
-    estudio: { ramMinGb: 8, storageMinGb: 256, gpuDedicated: 'any', priceMin: 450_000 },
+    // sort:'value' → mejor relación precio-calidad primero, no el equipo más caro.
+    estudio: { ramMinGb: 8, storageMinGb: 256, gpuDedicated: 'any', priceMin: 450_000, sort: 'value' },
     // Diseño/edición de video: CPU fuerte, 16 GB, SSD grande y GPU deseable.
-    diseno: { ramMinGb: 16, processorMinTier: 7, storageMinGb: 512, gpuDedicated: 'preferred', priceMin: 1_200_000 },
+    diseno: { ramMinGb: 16, processorMinTier: 7, storageMinGb: 512, gpuDedicated: 'preferred', priceMin: 1_200_000, sort: 'value' },
     // Gaming: GPU dedicada sí o sí + 16 GB. Piso real $1.000.000.
-    gaming: { ramMinGb: 16, gpuDedicated: 'required', processorMinTier: 5, storageMinGb: 512, priceMin: 1_000_000 },
+    gaming: { ramMinGb: 16, gpuDedicated: 'required', processorMinTier: 5, storageMinGb: 512, priceMin: 1_000_000, sort: 'value' },
     // Programación: 16 GB y SSD ≥512 para compilar/correr sin trabarse.
-    programacion: { ramMinGb: 16, storageMinGb: 512, processorMinTier: 5, priceMin: 800_000 },
+    programacion: { ramMinGb: 16, storageMinGb: 512, processorMinTier: 5, priceMin: 800_000, sort: 'value' },
     // Uso básico: lo más barato que ande bien.
     basico: { ramMinGb: 8, gpuDedicated: 'any', priceMin: 300_000, sort: 'price_asc' },
   },
@@ -259,7 +260,7 @@ export function queryToFilters(searchParams) {
   const os = searchParams.get('os');
   if (os === 'windows' || os === 'mac' || os === 'linux') f.os = os;
   const sort = searchParams.get('sort');
-  if (sort === 'price_asc' || sort === 'price_desc' || sort === 'relevance') f.sort = sort;
+  if (sort === 'price_asc' || sort === 'price_desc' || sort === 'relevance' || sort === 'value') f.sort = sort;
   for (const k of Object.keys(f)) if (f[k] === undefined) delete f[k];
   return f;
 }

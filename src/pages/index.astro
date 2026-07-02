@@ -2,7 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Header from '../components/layout/Header.astro';
 import Footer from '../components/layout/Footer.astro';
-import { HOME, SITE } from '../data/copy';
+import { SITE } from '../data/copy';
 import { catalogStatus } from '../lib/catalog';
 import { getFeatured } from '../lib/live-search';
 import { specSummary } from '../shared/attributes.mjs';
@@ -29,7 +29,9 @@ const USOS: Array<{ key: string; label: string; svg: string }> = [
 ];
 const usos = USOS.map((u) => ({ ...u, href: `/resultado?${filtersToQuery(quickPickFilters(u.key))}` }));
 
-const quizHref = HOME.hero.ctaPrimary.href;
+// Arranca en la 1ª pregunta (elegir modo). Antes iba a /quiz?modo=guiado, que
+// salteaba esa pregunta y hacía "empezar" en el paso 2.
+const quizHref = '/quiz';
 
 function gpuLabel(p: any): string {
   const s = p?.specs ?? {};

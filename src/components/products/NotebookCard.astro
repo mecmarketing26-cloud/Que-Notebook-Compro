@@ -48,7 +48,6 @@ const isPodium = rank != null && rank <= 3;
     <h2 class="card-title"><a href={`/notebook/${p.id}`}>{p.title}</a></h2>
 
     {specs && <p class="card-specs">{specs}</p>}
-    {p.description && <p class="card-desc">{p.description}</p>}
 
     <div class="card-footer">
       <div class="price-area">
@@ -65,7 +64,6 @@ const isPodium = rank != null && rank <= 3;
                 <span class="price-from">{PRODUCTO.precio_desde}</span>
                 <span class="price-tag">{formattedPrice}</span>
               </span>
-              <span class="price-ref">{PRODUCTO.precio_ref}</span>
             </div>
           )
           : (<span class="no-price">{PRODUCTO.sin_precio}</span>)
@@ -84,15 +82,15 @@ const isPodium = rank != null && rank <= 3;
       </a>
     </div>
 
-    <p class="card-disclosure">
-      <span class="affiliate-chip">
+    <div class="card-meta">
+      <a href={`/notebook/${p.id}`} class="card-details-link">Ver ficha y opinión →</a>
+      <span class="affiliate-chip" title="Enlace de afiliado de Mercado Libre">
         <svg width="10" height="10" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
           <path d="M6 0a6 6 0 1 0 0 12A6 6 0 0 0 6 0zm.75 9H5.25V5.25h1.5V9zm0-4.5H5.25V3h1.5v1.5z"/>
         </svg>
         Afiliado
       </span>
-      {PRODUCTO.precio_nota}
-    </p>
+    </div>
   </div>
 </article>
 
@@ -165,4 +163,10 @@ const isPodium = rank != null && rank <= 3;
   .price-off { color: var(--color-green-text); font-size: 0.72rem; font-weight: 800; }
   .price-now-row { display: flex; align-items: baseline; gap: 4px; }
   .price-from { color: var(--color-text-secondary); font-size: 0.75rem; margin-right: 2px; }
+
+  /* ── Fila meta: acceso a la ficha + disclosure mínima ── */
+  .card-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .card-details-link { font-size: 0.78rem; font-weight: 700; color: var(--color-blue); }
+  .card-details-link:hover { text-decoration: underline; }
+  .card-meta .affiliate-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 0.68rem; color: var(--color-text-muted); }
 </style>

@@ -91,12 +91,34 @@ export function score(product, f) {
   return pts;
 }
 
+/**
+ * "Valor" = relación precio-calidad. Capacidad ÚTIL (con techos, para que el
+ * exceso de specs no gane siempre) dividida por el precio en millones de ARS.
+ * Así una notebook que cumple de sobra a $1.3M le gana a una workstation de $6.8M
+ * para el mismo uso. Se usa en los atajos "Por uso" del home (sort: 'value').
+ */
+export function valueScore(product, f = {}) {
+  const s = product.specs ?? {};
+  const price = product.price;
+  if (price == null || price <= 0) return -Infinity; // sin precio no hay "valor" medible
+  let cap = 0;
+  cap += Math.min(s.ramGb ?? 0, 32) / 8; // hasta 4
+  cap += Math.min(s.processorTier ?? 0, 9); // hasta 9
+  cap += Math.min(s.storageGb ?? 0, 1024) / 256; // hasta 4
+  if ((f.gpuDedicated === 'preferred' || f.gpuDedicated === 'required') && s.gpuDedicated === true) cap += 5;
+  const known = ['ramGb', 'processorTier', 'storageGb', 'screenInches'].filter((k) => s[k] != null).length;
+  cap += known * 0.5;
+  return cap / (price / 1_000_000);
+}
+
 function sortProducts(list, f) {
   const sorted = [...list];
   if (f.sort === 'price_asc') {
     sorted.sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity));
   } else if (f.sort === 'price_desc') {
     sorted.sort((a, b) => (b.price ?? -Infinity) - (a.price ?? -Infinity));
+  } else if (f.sort === 'value') {
+    sorted.sort((a, b) => valueScore(b, f) - valueScore(a, f));
   } else {
     sorted.sort((a, b) => score(b, f) - score(a, f));
   }
