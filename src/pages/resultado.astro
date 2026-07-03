@@ -77,7 +77,8 @@ const altBudgets = Object.entries(BUDGET_RANGES).map(([k, pr]) => {
 const fmt = (n: number) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n);
 ---
 
-<BaseLayout title={`${RESULT.title} — ${SITE.name}`} description={RESULT.subtitle}>
+{/* noindex: espacio infinito de URLs por query params; el crawl budget va a blog/fichas. */}
+<BaseLayout title={`${RESULT.title} — ${SITE.name}`} description={RESULT.subtitle} noindex>
   <Header />
 
   <main class="result-page">
@@ -190,7 +191,7 @@ const fmt = (n: number) => new Intl.NumberFormat('es-AR', { style: 'currency', c
   .result-page { min-height: 100dvh; padding-top: 80px; padding-bottom: 120px; }
   .result-content { max-width: 460px; margin: 0 auto; padding: var(--space-xl) var(--space-md); }
   .result-header { text-align: center; margin-bottom: var(--space-lg); }
-  .result-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; letter-spacing: -0.03em; font-size: clamp(2.2rem, 6vw, 3.6rem); line-height: 1.02; color: var(--color-navy); }
+  .result-title { font-family: 'Bricolage Grotesque Variable', sans-serif; font-weight: 800; letter-spacing: -0.03em; font-size: clamp(2.2rem, 6vw, 3.6rem); line-height: 1.02; color: var(--color-navy); }
   .result-subtitle { color: var(--color-text-secondary); max-width: 620px; margin: var(--space-sm) auto 0; }
   .podium-hint { text-align: center; color: var(--color-text-soft); font-size: 0.85rem; margin-bottom: var(--space-xl); }
 
@@ -200,11 +201,11 @@ const fmt = (n: number) => new Intl.NumberFormat('es-AR', { style: 'currency', c
   /* No hay en este rango de precio */
   .price-empty { padding: var(--space-lg) 0; }
   .pe-emoji { font-size: 2.6rem; text-align: center; }
-  .pe-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; color: var(--color-navy); font-size: 1.3rem; text-align: center; margin-top: var(--space-sm); letter-spacing: -0.02em; }
+  .pe-title { font-family: 'Bricolage Grotesque Variable', sans-serif; font-weight: 800; color: var(--color-navy); font-size: 1.3rem; text-align: center; margin-top: var(--space-sm); letter-spacing: -0.02em; }
   .pe-msg { color: var(--color-text-secondary); text-align: center; max-width: 420px; margin: var(--space-sm) auto var(--space-lg); font-size: 0.9rem; }
   .pe-budgets { display: flex; flex-direction: column; gap: var(--space-sm); max-width: 360px; margin: 0 auto var(--space-xl); }
   .pe-budget { width: 100%; justify-content: center; font-size: 0.9rem; }
-  .pe-similar-h { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; color: var(--color-navy); text-align: center; margin-bottom: var(--space-md); font-size: 1rem; }
+  .pe-similar-h { font-family: 'Bricolage Grotesque Variable', sans-serif; font-weight: 700; color: var(--color-navy); text-align: center; margin-bottom: var(--space-md); font-size: 1rem; }
   .pe-actions { display: flex; justify-content: center; margin-top: var(--space-lg); }
 
   .empty { text-align: center; padding: var(--space-3xl) var(--space-lg); display: flex; flex-direction: column; align-items: center; gap: var(--space-md); }

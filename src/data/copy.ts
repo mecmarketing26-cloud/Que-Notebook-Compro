@@ -11,6 +11,13 @@ export const SITE = {
   ogImage: '/og-image.png',
 } as const;
 
+/**
+ * CTA único hacia el quiz. El MISMO texto en header, home, blog y footer:
+ * un solo mensaje = menos fricción y ningún usuario confundido entre
+ * "test", "quiz" y "encontrar equipo".
+ */
+export const CTA_QUIZ = { label: 'Encontrar mi notebook', href: '/quiz' } as const;
+
 export const HOME = {
   hero: {
     badge: 'Comparador de notebooks · Argentina',
@@ -239,7 +246,8 @@ export const FOOTER = {
   links: [
     { label: 'Inicio', href: '/' },
     { label: 'Blog', href: '/blog' },
-    { label: 'Hacer el test', href: '/quiz' },
+    { label: 'Comparar notebooks', href: '/comparar' },
+    { label: 'Encontrar mi notebook', href: '/quiz' },
   ],
   legal: [
     { label: 'Términos y privacidad', href: '/terminos' },

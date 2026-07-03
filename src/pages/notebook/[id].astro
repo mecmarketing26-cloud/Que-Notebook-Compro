@@ -5,7 +5,11 @@ import Footer from '../../components/layout/Footer.astro';
 import ShareButton from '../../components/ShareButton.astro';
 import { SITE, PRODUCTO } from '../../data/copy';
 import { getNotebook } from '../../lib/catalog';
+import { allProducts } from '../../lib/catalog-data';
+import { getTopic, categoryFor } from '../../data/blog';
 import { idealUses, pros, idealForSentence } from '../../shared/guidance.mjs';
+import { specSummary } from '../../shared/attributes.mjs';
+import type { NotebookProduct } from '../../lib/types';
 
 const { id } = Astro.params;
 const p = id ? await getNotebook(id) : undefined;
@@ -13,6 +17,10 @@ const p = id ? await getNotebook(id) : undefined;
 if (!p) {
   return new Response(null, { status: 404, statusText: 'Notebook no encontrada o sin stock' });
 }
+
+// Cache en el CDN de Netlify: el precio se refresca por job, no por visita.
+Astro.response.headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
+Astro.response.headers.set('Netlify-CDN-Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
 
 const fmt = (n: number) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: p.currency || 'ARS', maximumFractionDigits: 0 }).format(n);
 const formattedPrice = p.price != null ? fmt(p.price) : null;
@@ -35,27 +43,99 @@ if (s.gpuModel) rows.push(['Placa de video', s.gpuModel]);
 else if (s.gpuDedicated != null) rows.push(['Placa de video', s.gpuDedicated ? 'Dedicada' : 'Integrada']);
 if (s.os) rows.push(['Sistema operativo', s.os]);
 
+// Meta description propia (specs + precio): única por producto y con gancho de
+// CTR. La descripción cruda de ML es larga/genérica y Google la trunca mal.
+// El título se recorta para que specs y precio SIEMPRE entren en ~155 chars.
+const specLine = specSummary(s);
+const metaTail = [specLine ? `${specLine}.` : '', formattedPrice ? `Precio hoy: ${formattedPrice} en Mercado Libre.` : 'Ficha con specs y opinión.']
+  .filter(Boolean)
+  .join(' ');
+const titleBudget = Math.max(45, 155 - metaTail.length - 2);
+const shortTitle = p.title.length > titleBudget ? `${p.title.slice(0, titleBudget - 1).trimEnd()}…` : p.title;
+const metaDescription = `${shortTitle}: ${metaTail}`;
+
+// Guía del blog más afín (breadcrumb + link interno de vuelta al contenido).
+function guideSlugFor(prod: NotebookProduct): string {
+  const t = prod.title.toLowerCase();
+  const brand = (prod.specs.brand ?? '').toLowerCase();
+  if (/apple|macbook/.test(t) || /apple/.test(brand)) return 'mejores-macbook';
+  if (/chromebook/.test(t)) return 'mejores-chromebooks';
+  for (const [re, slug] of [
+    [/lenovo/, 'mejores-notebooks-lenovo'],
+    [/\bhp\b|hewlett/, 'mejores-notebooks-hp'],
+    [/asus/, 'mejores-notebooks-asus'],
+    [/acer/, 'mejores-notebooks-acer'],
+    [/dell/, 'mejores-notebooks-dell'],
+  ] as Array<[RegExp, string]>) {
+    if (re.test(brand) || re.test(t)) return slug;
+  }
+  if (prod.specs.gpuDedicated) return 'mejores-notebooks-gamer';
+  if ((prod.specs.ramGb ?? 0) >= 16) return 'mejores-notebooks-16gb-ram';
+  return 'mejores-notebooks-para-estudiar';
+}
+const guideSlug = guideSlugFor(p);
+const guide = getTopic(guideSlug);
+const guideLabel = guide ? categoryFor(guideSlug) : 'Blog';
+const guideHref = guide ? `/blog/${guideSlug}` : '/blog';
+
+// Notebooks similares (links internos: reparten autoridad hacia otras fichas
+// y bajan el rebote). Puntaje simple por marca / GPU / RAM / precio cercano.
+function similarTo(base: NotebookProduct, pool: NotebookProduct[], n = 4): NotebookProduct[] {
+  const score = (x: NotebookProduct): number => {
+    let pts = 0;
+    if (x.specs.brand && x.specs.brand === base.specs.brand) pts += 2;
+    if ((x.specs.gpuDedicated ?? false) === (base.specs.gpuDedicated ?? false)) pts += 1;
+    if (x.specs.ramGb === base.specs.ramGb) pts += 1;
+    if (base.price != null && x.price != null && Math.abs(x.price - base.price) / base.price <= 0.2) pts += 2;
+    return pts;
+  };
+  return pool
+    .filter((x) => x.id !== base.id)
+    .map((x) => ({ x, pts: score(x) }))
+    .sort((a, b) => b.pts - a.pts)
+    .slice(0, n)
+    .map(({ x }) => x);
+}
+const relatedProducts = similarTo(p, allProducts());
+
 const canonical = new URL(`/notebook/${p.id}`, Astro.site).toString();
-const jsonLd = JSON.stringify({
-  '@context': 'https://schema.org',
-  '@type': 'Product',
-  name: p.title,
-  image: p.image ? [p.image] : undefined,
-  description: p.description || undefined,
-  brand: s.brand ? { '@type': 'Brand', name: s.brand } : undefined,
-  offers: {
-    '@type': 'Offer',
-    price: p.price ?? undefined,
-    priceCurrency: p.currency || 'ARS',
-    availability: (p.available ?? 0) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-    url: canonical,
+// Oferta válida hasta 14 días adelante (Google pide priceValidUntil; el precio
+// real se re-verifica en cada refresh del catálogo).
+const priceValidUntil = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+const jsonLd = JSON.stringify([
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: p.title,
+    sku: p.id,
+    image: p.image ? [p.image] : undefined,
+    description: p.description || metaDescription,
+    brand: s.brand ? { '@type': 'Brand', name: s.brand } : undefined,
+    offers: {
+      '@type': 'Offer',
+      price: p.price ?? undefined,
+      priceCurrency: p.currency || 'ARS',
+      itemCondition: p.condition === 'used' ? 'https://schema.org/UsedCondition' : 'https://schema.org/NewCondition',
+      availability: (p.available ?? 0) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      priceValidUntil,
+      url: canonical,
+    },
   },
-});
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Inicio', item: new URL('/', Astro.site).toString() },
+      { '@type': 'ListItem', position: 2, name: guide?.h1 ?? 'Blog', item: new URL(guideHref, Astro.site).toString() },
+      { '@type': 'ListItem', position: 3, name: p.title, item: canonical },
+    ],
+  },
+]);
 ---
 
 <BaseLayout
   title={`${p.title} — ${SITE.name}`}
-  description={p.description || `${p.title}. Precio de referencia y specs en vivo desde Mercado Libre.`}
+  description={metaDescription}
   ogImage={p.image || SITE.ogImage}
   jsonLd={jsonLd}
 >
@@ -63,8 +143,16 @@ const jsonLd = JSON.stringify({
 
   <main class="product-page">
     <div class="product-inner">
+      <nav class="crumbs" aria-label="Ruta de navegación">
+        <a href="/">Inicio</a>
+        <span class="crumb-sep" aria-hidden="true">›</span>
+        <a href={guideHref}>{guideLabel}</a>
+        <span class="crumb-sep" aria-hidden="true">›</span>
+        <span class="crumb-here" aria-current="page">{p.title}</span>
+      </nav>
+
       <div class="product-media">
-        <img src={p.image} alt={p.title} width="600" height="600" decoding="async" />
+        <img src={p.image} alt={p.title} width="600" height="600" fetchpriority="high" decoding="async" />
       </div>
 
       <div class="product-info">
@@ -141,6 +229,29 @@ const jsonLd = JSON.stringify({
           {PRODUCTO.disclosure}
         </p>
       </div>
+
+      {relatedProducts.length > 0 && (
+        <section class="related">
+          <h2 class="related-h">Notebooks similares</h2>
+          <div class="related-grid">
+            {relatedProducts.map((r) => (
+              <a href={`/notebook/${r.id}`} class="related-card lift">
+                <span class="related-img">
+                  {r.image && <img src={r.image} alt={r.title} width="160" height="120" loading="lazy" decoding="async" />}
+                </span>
+                <span class="related-title">{r.title}</span>
+                {specSummary(r.specs) && <span class="related-specs">{specSummary(r.specs)}</span>}
+                <span class="related-price">{r.price != null ? fmt(r.price) : PRODUCTO.sin_precio}</span>
+              </a>
+            ))}
+          </div>
+          {guide && (
+            <p class="related-guide">
+              ¿Todavía comparando? Mirá el ranking completo: <a href={guideHref}>{guide.h1}</a>.
+            </p>
+          )}
+        </section>
+      )}
     </div>
   </main>
 
@@ -178,7 +289,7 @@ const jsonLd = JSON.stringify({
   }
   .product-media img { width: 100%; height: auto; object-fit: contain; border-radius: var(--radius-md); }
 
-  .product-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; letter-spacing: -0.02em; color: var(--color-navy); font-size: 1.6rem; line-height: 1.2; margin-bottom: var(--space-sm); text-align: center; }
+  .product-title { font-family: 'Bricolage Grotesque Variable', sans-serif; font-weight: 800; letter-spacing: -0.02em; color: var(--color-navy); font-size: 1.6rem; line-height: 1.2; margin-bottom: var(--space-sm); text-align: center; }
 
   .use-tags { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; padding: 0; margin: 0 0 var(--space-md); justify-content: center; }
   .use-tag { font-size: 0.72rem; font-weight: 600; color: var(--color-blue); background: #eef2fb; border: 1px solid #dde6fb; border-radius: var(--radius-pill); padding: 4px 11px; }
@@ -196,7 +307,7 @@ const jsonLd = JSON.stringify({
   .product-ideal { color: var(--color-text-primary); font-weight: 600; margin-bottom: var(--space-lg); }
 
   .pros { margin-bottom: var(--space-lg); }
-  .pros-h { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; color: var(--color-navy); font-size: 1.15rem; margin-bottom: var(--space-sm); }
+  .pros-h { font-family: 'Bricolage Grotesque Variable', sans-serif; font-weight: 700; color: var(--color-navy); font-size: 1.15rem; margin-bottom: var(--space-sm); }
   .pros-list { margin: 0; padding-left: 1.1rem; color: var(--color-text-secondary); display: flex; flex-direction: column; gap: 6px; font-size: 0.9rem; }
   .pros-list li::marker { color: var(--color-green); }
   .share-full { width: 100%; margin-top: 12px; }
@@ -206,6 +317,27 @@ const jsonLd = JSON.stringify({
   .spec-table tr:last-child th, .spec-table tr:last-child td { border-bottom: none; }
   .spec-table th { color: var(--color-text-muted); font-weight: 500; width: 42%; }
   .spec-table td { color: var(--color-text-navy); font-weight: 600; }
+
+  /* Breadcrumb */
+  .crumbs { display: flex; align-items: center; gap: 7px; font-size: 0.75rem; color: var(--color-text-soft); overflow: hidden; white-space: nowrap; }
+  .crumbs a { color: var(--color-blue); font-weight: 600; flex: none; }
+  .crumbs a:hover { text-decoration: underline; }
+  .crumb-sep { flex: none; color: var(--color-text-muted); }
+  .crumb-here { overflow: hidden; text-overflow: ellipsis; }
+
+  /* Notebooks similares */
+  .related { margin-top: var(--space-lg); }
+  .related-h { font-family: 'Bricolage Grotesque Variable', sans-serif; font-weight: 800; letter-spacing: -0.015em; color: var(--color-navy); font-size: 1.2rem; margin-bottom: var(--space-md); }
+  .related-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .related-card { display: flex; flex-direction: column; gap: 5px; background: var(--color-card); border: 1px solid var(--color-card-border); border-radius: var(--radius-md); box-shadow: var(--shadow-card); padding: 10px; }
+  .related-img { display: block; aspect-ratio: 4/3; background: #fff; border: 1px solid #f1efe7; border-radius: 8px; overflow: hidden; }
+  .related-img img { width: 100%; height: 100%; object-fit: contain; padding: 6px; }
+  .related-title { font-size: 0.74rem; font-weight: 700; color: var(--color-text-primary); line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .related-specs { font-size: 0.68rem; color: var(--color-text-soft); display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+  .related-price { font-family: 'Bricolage Grotesque Variable', sans-serif; font-weight: 800; font-size: 0.95rem; color: var(--color-navy); }
+  .related-guide { font-size: 0.8rem; color: var(--color-text-secondary); margin-top: var(--space-md); line-height: 1.6; }
+  .related-guide a { color: var(--color-blue); font-weight: 700; }
+  .related-guide a:hover { text-decoration: underline; }
 
   .buy-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; max-width: 340px; margin: 0 auto; padding: 14px 22px; font-size: 0.95rem; }
   .share-full { display: flex; max-width: 340px; margin-left: auto; margin-right: auto; }

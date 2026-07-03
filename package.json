@@ -23,6 +23,8 @@
     "@astrojs/netlify": "^5.5.0",
     "@astrojs/preact": "^3.5.0",
     "@astrojs/tailwind": "^5.1.0",
+    "@fontsource-variable/bricolage-grotesque": "^5.2.10",
+    "@fontsource-variable/hanken-grotesk": "^5.2.8",
     "astro": "^4.16.0",
     "preact": "^10.24.0"
   },

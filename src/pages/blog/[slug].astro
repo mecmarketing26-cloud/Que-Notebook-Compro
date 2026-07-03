@@ -3,7 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Header from '../../components/layout/Header.astro';
 import Footer from '../../components/layout/Footer.astro';
 import ShareButton from '../../components/ShareButton.astro';
-import { SITE, PRODUCTO } from '../../data/copy';
+import { SITE, PRODUCTO, CTA_QUIZ } from '../../data/copy';
 import { BLOG_TOPICS, getTopic, categoryFor } from '../../data/blog';
 import { liveSearch } from '../../lib/live-search';
 import { specSummary } from '../../shared/attributes.mjs';
@@ -15,13 +15,31 @@ if (!topic) return new Response(null, { status: 404 });
 
 const { products, building, universe } = await liveSearch(topic.filters, { max: topic.max ?? 8, match: topic.match });
 
+// El contenido cambia cuando se refresca el catálogo: cachear 1h en el CDN de
+// Netlify (con stale-while-revalidate) baja el TTFB para usuarios y Googlebot.
+Astro.response.headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
+Astro.response.headers.set('Netlify-CDN-Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
+
 const fmt = (n: number) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n);
 const canonical = new URL(`/blog/${topic.slug}`, Astro.site).toString();
 const category = categoryFor(topic.slug);
-const readMin = Math.max(4, Math.ceil(products.length * 0.8));
+const readMin = Math.max(4, Math.ceil(products.length * 0.8 + (topic.guide?.length ?? 0)));
 
-// Related topics (internal links for SEO)
-const related = BLOG_TOPICS.filter((t) => t.slug !== topic.slug).slice(0, 4);
+// Fechas REALES: publicación fija (del topic) + modificación = último refresh
+// del catálogo entre los productos del ranking. Nunca `new Date()`.
+const dateModified = products.reduce((max, p) => (p.fetchedAt > max ? p.fetchedAt : max), topic.datePublished);
+const dateModifiedDay = dateModified.slice(0, 10);
+const updatedLabel = new Intl.DateTimeFormat('es-AR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/Argentina/Buenos_Aires' }).format(new Date(dateModified));
+
+// Portada: imagen del equipo #1 (también og:image del artículo).
+const cover = products[0]?.image;
+
+// Related topics (internal links for SEO): 4 vecinos circulares, para que cada
+// artículo linkee a un grupo distinto y el link equity se reparta parejo.
+const selfIdx = BLOG_TOPICS.findIndex((t) => t.slug === topic.slug);
+const related = Array.from({ length: 4 }, (_, i) => BLOG_TOPICS[(selfIdx + 1 + i) % BLOG_TOPICS.length]).filter(
+  (t) => t.slug !== topic.slug,
+);
 
 // Veredicto por puesto (badge + etiqueta corta para el índice).
 const RANK = [
@@ -31,16 +49,29 @@ const RANK = [
 ];
 const rankMeta = (i: number) => RANK[i] ?? { label: `Opción #${i + 1}`, cls: 'rb-muted' };
 
-const jsonLd = JSON.stringify([
+const jsonLdBlocks: object[] = [
   {
     '@context': 'https://schema.org',
     '@type': 'Article',
     headline: topic.h1,
     description: topic.description,
-    datePublished: new Date().toISOString().slice(0, 10),
-    author: { '@type': 'Organization', name: SITE.name },
+    datePublished: topic.datePublished,
+    dateModified: dateModifiedDay,
+    image: cover ? [cover] : undefined,
+    author: { '@type': 'Organization', name: SITE.name, url: Astro.site?.toString() },
+    publisher: { '@type': 'Organization', name: SITE.name, logo: { '@type': 'ImageObject', url: new URL('/apple-touch-icon.png', Astro.site).toString() } },
     mainEntityOfPage: canonical,
+    inLanguage: 'es-AR',
     keywords: (topic.keywords ?? []).join(', '),
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Inicio', item: new URL('/', Astro.site).toString() },
+      { '@type': 'ListItem', position: 2, name: 'Blog', item: new URL('/blog', Astro.site).toString() },
+      { '@type': 'ListItem', position: 3, name: topic.h1, item: canonical },
+    ],
   },
   {
     '@context': 'https://schema.org',
@@ -52,10 +83,18 @@ const jsonLd = JSON.stringify([
       url: new URL(`/notebook/${p.id}`, Astro.site).toString(),
     })),
   },
-]);
+];
+if (topic.faq?.length) {
+  jsonLdBlocks.push({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: topic.faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+  });
+}
+const jsonLd = JSON.stringify(jsonLdBlocks);
 ---
 
-<BaseLayout title={topic.title} description={topic.description} jsonLd={jsonLd}>
+<BaseLayout title={topic.title} description={topic.description} jsonLd={jsonLd} ogType="article" ogImage={cover ?? SITE.ogImage}>
   <Header />
 
   <main class="post">
@@ -67,7 +106,7 @@ const jsonLd = JSON.stringify([
         <div class="ph-meta">
           <span class="ph-cat">{category}</span>
           <span>·</span>
-          <span>Actualizada hoy</span>
+          <span>Precios actualizados al {updatedLabel}</span>
         </div>
         <h1 class="ph-title">{topic.h1}</h1>
         <p class="ph-intro">{topic.intro}</p>
@@ -83,9 +122,9 @@ const jsonLd = JSON.stringify([
       </header>
 
       <!-- CTA quiz -->
-      <a href="/quiz" class="btn btn-primary ctaQuiz post-quizbtn">
+      <a href={CTA_QUIZ.href} class="btn btn-primary ctaQuiz post-quizbtn">
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#16224C" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3z"></path></svg>
-        Hacé el quiz y encontrá la tuya
+        {CTA_QUIZ.label}
       </a>
       <p class="post-quizhint">¿No te convence ninguna? Te armamos otro ranking a tu medida.</p>
 
@@ -146,12 +185,42 @@ const jsonLd = JSON.stringify([
             <span class="post-cta-blob" aria-hidden="true"></span>
             <div class="post-cta-h">¿Querés ver más opciones?</div>
             <p class="post-cta-d">Respondé 5 preguntas rápidas y te mostramos las notebooks que mejor te quedan, con precio actualizado.</p>
-            <a href="/quiz" class="btn btn-primary ctaQuiz post-cta-btn">
-              Empezar el quiz
+            <a href={CTA_QUIZ.href} class="btn btn-primary ctaQuiz post-cta-btn">
+              {CTA_QUIZ.label}
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16224C" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"></path></svg>
             </a>
           </section>
         </>
+      )}
+
+      <!-- Guía de compra (contenido editorial único del artículo) -->
+      {topic.guide && topic.guide.length > 0 && (
+        <section class="post-guide">
+          {topic.guide.map((sec) => (
+            <div class="pg-block">
+              <h2 class="pg-h2">{sec.h2}</h2>
+              {sec.paragraphs.map((par) => <p class="pg-p">{par}</p>)}
+            </div>
+          ))}
+        </section>
+      )}
+
+      <!-- FAQ del tema (acordeón + JSON-LD FAQPage) -->
+      {topic.faq && topic.faq.length > 0 && (
+        <section class="post-faq">
+          <h2 class="pg-h2">Preguntas frecuentes</h2>
+          <div class="pf-list">
+            {topic.faq.map((f) => (
+              <details class="pf-item">
+                <summary class="pf-q">
+                  <span>{f.q}</span>
+                  <svg class="pf-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+                </summary>
+                <div class="pf-a">{f.a}</div>
+              </details>
+            ))}
+          </div>
+        </section>
       )}
 
       <!-- Seguí leyendo -->
@@ -189,7 +258,7 @@ const jsonLd = JSON.stringify([
   .post-hero { background: var(--color-navy); color: #fff; border-radius: var(--radius-lg); padding: var(--space-lg) var(--space-lg) var(--space-lg); }
   .ph-meta { display: flex; align-items: center; gap: 7px; font-size: 0.72rem; color: #9fb0d8; margin-bottom: var(--space-md); }
   .ph-cat { color: var(--color-amber); font-weight: 700; }
-  .ph-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; letter-spacing: -0.025em; font-size: clamp(1.7rem, 5.5vw, 2.2rem); line-height: 1.05; }
+  .ph-title { font-family: 'Bricolage Grotesque Variable', sans-serif; font-weight: 800; letter-spacing: -0.025em; font-size: clamp(1.7rem, 5.5vw, 2.2rem); line-height: 1.05; }
   .ph-intro { font-size: 0.9rem; color: #b9c2db; line-height: 1.6; margin-top: var(--space-md); }
   .ph-foot { display: flex; align-items: center; gap: 12px; margin-top: var(--space-lg); font-size: 0.78rem; color: #8b96b8; }
   .ph-stat { display: inline-flex; align-items: center; gap: 6px; }
@@ -204,7 +273,7 @@ const jsonLd = JSON.stringify([
 
   /* TOC */
   .post-toc { background: var(--color-card); border: 1px solid var(--color-card-border); border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: var(--space-lg); }
-  .toc-h { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 0.9rem; color: var(--color-navy); margin-bottom: 10px; }
+  .toc-h { font-family: 'Bricolage Grotesque Variable', sans-serif; font-weight: 700; font-size: 0.9rem; color: var(--color-navy); margin-bottom: 10px; }
   .toc-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid #f4f2ec; }
   .toc-row:last-child { border-bottom: none; }
   .toc-label { font-size: 0.82rem; color: var(--color-text-primary); }
@@ -214,7 +283,7 @@ const jsonLd = JSON.stringify([
   .post-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--space-md); }
   .pcard { background: var(--color-card); border: 1px solid var(--color-card-border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-card); scroll-margin-top: 80px; }
   .pcard-top { display: flex; align-items: center; gap: 9px; padding: 13px 15px 0; }
-  .pcard-rank { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 50%; background: var(--color-navy); color: #fff; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 0.95rem; }
+  .pcard-rank { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 50%; background: var(--color-navy); color: #fff; font-family: 'Bricolage Grotesque Variable', sans-serif; font-weight: 800; font-size: 0.95rem; }
   .pcard-rank.is-gold { background: var(--color-amber); color: var(--color-navy); }
   .pcard-badge { font-size: 0.72rem; font-weight: 700; padding: 3px 9px; border-radius: 6px; }
   .rb-gold { color: var(--color-navy); background: #FFF3D1; }
@@ -226,14 +295,14 @@ const jsonLd = JSON.stringify([
   .pcard-img { flex: none; width: 104px; aspect-ratio: 4/3; border-radius: 9px; background: #fff; border: 1px solid #f1efe7; display: flex; align-items: center; justify-content: center; overflow: hidden; }
   .pcard-img img { width: 100%; height: 100%; object-fit: contain; padding: 8px; }
   .pcard-info { flex: 1; min-width: 0; }
-  .pcard-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 0.98rem; line-height: 1.16; }
+  .pcard-title { font-family: 'Bricolage Grotesque Variable', sans-serif; font-weight: 700; font-size: 0.98rem; line-height: 1.16; }
   .pcard-title a { color: var(--color-navy); }
   .pcard-title a:hover { color: var(--color-blue); }
   .pcard-specs { font-size: 0.74rem; color: var(--color-text-soft); margin: 6px 0 7px; }
   .pcard-priceline { display: flex; align-items: baseline; gap: 7px; min-height: 14px; }
   .pcard-old { font-size: 0.72rem; color: var(--color-text-muted); text-decoration: line-through; }
   .pcard-disc { font-size: 0.72rem; font-weight: 700; color: var(--color-green-text); }
-  .pcard-price { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 1.15rem; color: var(--color-navy); letter-spacing: -0.02em; }
+  .pcard-price { font-family: 'Bricolage Grotesque Variable', sans-serif; font-weight: 800; font-size: 1.15rem; color: var(--color-navy); letter-spacing: -0.02em; }
   .pcard-verdict { font-size: 0.82rem; color: var(--color-text-primary); line-height: 1.55; padding: 0 15px; margin: 0 0 13px; }
   .pcard-buy { display: block; width: 100%; height: 44px; line-height: 44px; text-align: center; border-top: 1px solid #f1efe7; background: var(--color-blue); color: #fff; font-weight: 700; font-size: 0.8rem; transition: background 0.15s; }
   .pcard-buy:hover { background: var(--color-blue-hover); }
@@ -241,16 +310,34 @@ const jsonLd = JSON.stringify([
   /* CTA navy */
   .post-cta { position: relative; overflow: hidden; background: var(--color-navy); color: #fff; border-radius: var(--radius-lg); padding: var(--space-lg) var(--space-lg); text-align: center; margin: var(--space-lg) 0; }
   .post-cta-blob { position: absolute; right: -26px; top: -26px; width: 120px; height: 120px; border-radius: 50%; background: rgba(255,194,51,0.14); }
-  .post-cta-h { position: relative; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 1.15rem; }
+  .post-cta-h { position: relative; font-family: 'Bricolage Grotesque Variable', sans-serif; font-weight: 800; font-size: 1.15rem; }
   .post-cta-d { position: relative; font-size: 0.82rem; color: #b9c2db; line-height: 1.5; margin: 8px 0 14px; }
   .post-cta-btn { position: relative; width: 100%; height: 50px; font-size: 1rem; }
 
   /* Seguí leyendo */
   .post-more { background: var(--color-navy); color: #fff; border-radius: var(--radius-lg); padding: var(--space-md) var(--space-lg); }
-  .more-h { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 0.9rem; margin-bottom: 8px; }
+  .more-h { font-family: 'Bricolage Grotesque Variable', sans-serif; font-weight: 700; font-size: 0.9rem; margin-bottom: 8px; }
   .more-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
   .more-row:last-child { border-bottom: none; }
   .more-row span { font-size: 0.82rem; color: #dfe4f0; }
 
   .post-disclosure { color: var(--color-text-muted); font-size: 0.72rem; line-height: 1.6; margin-top: var(--space-lg); }
+
+  /* Guía de compra (editorial) */
+  .post-guide { margin: var(--space-lg) 0 0; display: flex; flex-direction: column; gap: var(--space-lg); }
+  .pg-block { background: var(--color-card); border: 1px solid var(--color-card-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); padding: var(--space-lg); }
+  .pg-h2 { font-family: 'Bricolage Grotesque Variable', sans-serif; font-weight: 800; letter-spacing: -0.015em; font-size: 1.15rem; color: var(--color-navy); margin-bottom: 10px; line-height: 1.2; }
+  .pg-p { font-size: 0.88rem; line-height: 1.7; color: var(--color-text-secondary); }
+  .pg-p + .pg-p { margin-top: 10px; }
+
+  /* FAQ del artículo */
+  .post-faq { margin-top: var(--space-lg); }
+  .post-faq .pg-h2 { margin-bottom: 12px; }
+  .pf-list { display: flex; flex-direction: column; gap: 8px; }
+  .pf-item { background: var(--color-card); border: 1px solid var(--color-card-border); border-radius: var(--radius-md); box-shadow: var(--shadow-card); overflow: hidden; }
+  .pf-q { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 15px; font-family: 'Bricolage Grotesque Variable', sans-serif; font-weight: 700; font-size: 0.9rem; color: var(--color-navy); }
+  .pf-q::-webkit-details-marker { display: none; }
+  .pf-chevron { flex: none; color: var(--color-text-soft); transition: transform 0.2s ease; }
+  .pf-item[open] .pf-chevron { transform: rotate(180deg); }
+  .pf-a { padding: 0 15px 14px; font-size: 0.85rem; line-height: 1.6; color: var(--color-text-secondary); }
 </style>

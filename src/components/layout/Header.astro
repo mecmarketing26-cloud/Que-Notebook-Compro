@@ -1,5 +1,5 @@
 ---
-import { SITE } from '../../data/copy';
+import { SITE, CTA_QUIZ } from '../../data/copy';
 ---
 
 <header class="site-header">
@@ -14,8 +14,8 @@ import { SITE } from '../../data/copy';
     <div class="nav-actions">
       <a href="/" class="nav-link">Inicio</a>
       <a href="/blog" class="nav-link">Blog</a>
-      <a href="/quiz" class="nav-cta ctaQuiz">
-        Hacer el test
+      <a href={CTA_QUIZ.href} class="nav-cta ctaQuiz">
+        {CTA_QUIZ.label}
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16224C" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"></path></svg>
       </a>
     </div>
@@ -63,7 +63,7 @@ import { SITE } from '../../data/copy';
     background: var(--color-navy);
   }
   .logo-word {
-    font-family: 'Bricolage Grotesque', sans-serif;
+    font-family: 'Bricolage Grotesque Variable', sans-serif;
     font-weight: 800;
     font-size: 1.05rem;
     letter-spacing: -0.03em;
@@ -93,7 +93,7 @@ import { SITE } from '../../data/copy';
     border-radius: 10px;
     background: var(--color-amber);
     color: var(--color-navy);
-    font-family: 'Hanken Grotesk', sans-serif;
+    font-family: 'Hanken Grotesk Variable', sans-serif;
     font-weight: 800;
     font-size: 0.82rem;
     white-space: nowrap;

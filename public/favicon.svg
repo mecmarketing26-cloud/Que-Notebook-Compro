@@ -1,4 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-  <rect width="64" height="64" rx="14" fill="#0A0A0F"/>
-  <text x="32" y="46" font-size="36" text-anchor="middle" font-family="serif">🎁</text>
+  <rect width="64" height="64" rx="14" fill="#16224C"/>
+  <g stroke="#FFC233" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="15" y="17" width="34" height="22" rx="3.5"/>
+    <path d="M11 47h42"/>
+  </g>
 </svg>

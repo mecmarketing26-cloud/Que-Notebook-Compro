@@ -8,6 +8,8 @@ import netlify from '@astrojs/netlify';
 // the browser. Marketing pages opt back into static via `export const prerender = true`.
 export default defineConfig({
   site: 'https://quenotebookcomprar.com',
+  // Una sola URL por página (/blog, nunca /blog/): evita contenido duplicado.
+  trailingSlash: 'never',
   output: 'server',
   adapter: netlify(),
   integrations: [

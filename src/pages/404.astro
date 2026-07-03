@@ -8,6 +8,7 @@ import { NOT_FOUND, SITE } from '../data/copy';
 <BaseLayout
   title={`404 — ${SITE.name}`}
   description="Esta página no existe."
+  noindex
 >
   <Header />
 
@@ -46,7 +47,7 @@ import { NOT_FOUND, SITE } from '../data/copy';
   .not-found-emoji { font-size: 5rem; }
 
   .not-found-title {
-    font-family: 'Bricolage Grotesque', sans-serif;
+    font-family: 'Bricolage Grotesque Variable', sans-serif;
     font-weight: 800;
     letter-spacing: -0.03em;
     font-size: clamp(2.2rem, 7vw, 3.6rem);

@@ -7,6 +7,10 @@ interface Props {
   description?: string;
   ogImage?: string;
   jsonLd?: string;
+  /** Páginas utilitarias/dinámicas (resultado, 404): no indexar, sí seguir links. */
+  noindex?: boolean;
+  /** 'article' para posts del blog; 'website' para el resto. */
+  ogType?: 'website' | 'article';
 }
 
 const {
@@ -14,6 +18,8 @@ const {
   description = SITE.description,
   ogImage = SITE.ogImage,
   jsonLd,
+  noindex = false,
+  ogType = 'website',
 } = Astro.props;
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
@@ -35,8 +41,9 @@ const GTM_ID: string = 'GTM-K7L9C4SF';
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalURL} />
+    {noindex && <meta name="robots" content="noindex, follow" />}
 
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={ogType} />
     <meta property="og:url" content={canonicalURL} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
@@ -50,13 +57,11 @@ const GTM_ID: string = 'GTM-K7L9C4SF';
     <meta name="twitter:image" content={ogImageURL} />
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
+    <!-- Las imágenes de producto vienen del CDN de Mercado Libre. -->
+    <link rel="preconnect" href="https://http2.mlstatic.com" />
 
     {jsonLd && <script type="application/ld+json" is:inline set:html={jsonLd} />}
 

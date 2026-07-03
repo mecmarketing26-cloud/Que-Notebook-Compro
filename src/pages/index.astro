@@ -3,7 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import Header from '../components/layout/Header.astro';
 import Footer from '../components/layout/Footer.astro';
 import BlogCard from '../components/BlogCard.astro';
-import { SITE, FAQ } from '../data/copy';
+import { SITE, FAQ, CTA_QUIZ } from '../data/copy';
 import { catalogStatus } from '../lib/catalog';
 import { getFeatured } from '../lib/live-search';
 import { specSummary } from '../shared/attributes.mjs';
@@ -54,12 +54,30 @@ const guides = GUIDE_SLUGS.map((slug) => {
 // Chips de búsqueda rápida (deep-link a /resultado?q=...).
 const SEARCH_CHIPS = ['Lenovo', 'ASUS', 'Acer', 'HP', 'RTX 4060', 'Ryzen 7'];
 
-// FAQ → JSON-LD FAQPage (rich snippet en Google).
-const faqJsonLd = JSON.stringify({
-  '@context': 'https://schema.org',
-  '@type': 'FAQPage',
-  mainEntity: FAQ.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
-});
+// JSON-LD de la home: Organization (branding en resultados) + FAQPage (rich snippet).
+const siteUrl = Astro.site?.toString() ?? 'https://quenotebookcomprar.com/';
+const faqJsonLd = JSON.stringify([
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: SITE.name,
+    url: siteUrl,
+    logo: new URL('/apple-touch-icon.png', Astro.site).toString(),
+    description: SITE.description,
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: SITE.name,
+    url: siteUrl,
+    inLanguage: 'es-AR',
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: FAQ.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+  },
+]);
 
 function gpuLabel(p: any): string {
   const s = p?.specs ?? {};
@@ -93,7 +111,7 @@ function screenLabel(p: any): string {
         </span>
         <h1 class="b-hero-title">Dejá de googlear.<br>Tu notebook <span class="hl">ideal</span> está acá.</h1>
         <a href={quizHref} class="b-hero-btn ctaQuiz">
-          Encontrar mi equipo
+          {CTA_QUIZ.label}
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16224C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"></path></svg>
         </a>
         <p class="b-hero-microcopy">Gratis · Sin registro · Menos de 2 minutos</p>
@@ -148,12 +166,20 @@ function screenLabel(p: any): string {
         <div class="b-top-note">{top ? 'Precio verificado en vivo' : 'Hacé el test y te la mostramos'}</div>
       </section>
 
-      <!-- COMPARAR LADO A LADO -->
-      <section class="b-card b-cmp lift">
-        <div class="b-cmp-head">
-          <h2 class="b-card-h">Comparar lado a lado</h2>
-          <a href="/comparar" class="b-cmp-link">Elegir 2 →</a>
-        </div>
+      <!-- COMPARADOR (feature destacado: qué es, cómo funciona, ejemplo y CTA) -->
+      <section class="b-cmp lift">
+        <span class="b-cmp-eyebrow">Herramienta gratis</span>
+        <h2 class="b-cmp-h">Compará 2 notebooks frente a frente</h2>
+        <p class="b-cmp-lead">
+          ¿Dudás entre dos modelos? Elegilos de nuestra base y te mostramos las specs lado a lado,
+          la diferencia de precio y un veredicto claro: cuál gana según para qué la quieras.
+        </p>
+        <ol class="b-cmp-steps">
+          <li><span class="b-cmp-stepnum">1</span> Elegí 2 modelos</li>
+          <li><span class="b-cmp-stepnum">2</span> Miralos lado a lado</li>
+          <li><span class="b-cmp-stepnum">3</span> Decidí con el veredicto</li>
+        </ol>
+        <p class="b-cmp-example">Así se ve, por ejemplo:</p>
         <div class="b-cmp-row">
           <div class="b-cmp-card">
             <a href={vsA ? `/notebook/${vsA.id}` : quizHref} class="b-cmp-img">
@@ -175,12 +201,16 @@ function screenLabel(p: any): string {
             <div class="b-cmp-spec"><span>Pantalla</span><b>{screenLabel(vsB)}</b></div>
           </div>
         </div>
+        <a href="/comparar" class="b-cmp-btn">
+          Probar el comparador
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16224C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"></path></svg>
+        </a>
       </section>
 
       <!-- GUÍAS DEL BLOG (SEO) -->
       <section class="b-guides">
         <div class="b-guides-head">
-          <h2 class="b-card-h">Aprendé antes de comprar</h2>
+          <h2 class="b-card-h">Guías para elegir mejor</h2>
           <a href="/blog" class="b-guides-link">Ver todas las guías →</a>
         </div>
         <div class="guides-grid">
@@ -234,7 +264,7 @@ function screenLabel(p: any): string {
     align-items: start;
   }
 
-  .b-card-h { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 0.95rem; color: var(--color-navy); }
+  .b-card-h { font-family: 'Bricolage Grotesque Variable', sans-serif; font-weight: 700; font-size: 0.95rem; color: var(--color-navy); }
 
   /* ── HERO ── */
   .b-hero {
@@ -252,12 +282,12 @@ function screenLabel(p: any): string {
   /* Palabra destacada del título (mismo ámbar del sistema). */
   .b-hero-title .hl { color: var(--color-amber); }
   .b-hero-eyebrow { position: relative; display: block; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-amber); }
-  .b-hero-title { position: relative; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 1.85rem; line-height: 1.0; letter-spacing: -0.02em; margin: 10px 0 16px; }
+  .b-hero-title { position: relative; font-family: 'Bricolage Grotesque Variable', sans-serif; font-weight: 800; font-size: 1.85rem; line-height: 1.0; letter-spacing: -0.02em; margin: 10px 0 16px; }
   .b-hero-btn {
     position: relative; display: inline-flex; align-items: center; gap: 8px;
     height: 46px; padding: 0 20px; border-radius: 12px;
     background: var(--color-amber); color: var(--color-navy);
-    font-family: 'Hanken Grotesk', sans-serif; font-weight: 800; font-size: 0.95rem;
+    font-family: 'Hanken Grotesk Variable', sans-serif; font-weight: 800; font-size: 0.95rem;
   }
 
   /* ── POR USO ── */
@@ -276,27 +306,44 @@ function screenLabel(p: any): string {
   .b-top-img { display: block; aspect-ratio: 4/3; border-radius: 9px; background: #faf9f5; overflow: hidden; margin-bottom: 10px; }
   .b-top-img img { width: 100%; height: 100%; object-fit: contain; padding: 10px; }
   .b-top-title { font-size: 0.8rem; font-weight: 600; line-height: 1.25; color: var(--color-text-primary); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  .b-top-price { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 1.15rem; color: var(--color-navy); margin-top: 3px; }
+  .b-top-price { font-family: 'Bricolage Grotesque Variable', sans-serif; font-weight: 800; font-size: 1.15rem; color: var(--color-navy); margin-top: 3px; }
   .b-top-note { font-size: 0.66rem; color: var(--color-text-soft); margin-top: 2px; }
 
-  /* ── COMPARAR ── */
-  .b-cmp { grid-column: 1 / -1; }
-  .b-cmp-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-  .b-cmp-link { font-size: 0.72rem; color: var(--color-blue); font-weight: 700; }
+  /* ── COMPARADOR (feature destacado, en navy como el hero) ── */
+  .b-cmp {
+    grid-column: 1 / -1; position: relative; overflow: hidden;
+    background: var(--color-navy); color: #fff;
+    border-radius: var(--radius-lg); padding: 22px 18px 18px;
+  }
+  .b-cmp-eyebrow { display: inline-block; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-navy); background: var(--color-amber); border-radius: var(--radius-pill); padding: 3px 10px; }
+  .b-cmp-h { font-family: 'Bricolage Grotesque Variable', sans-serif; font-weight: 800; font-size: 1.35rem; line-height: 1.1; letter-spacing: -0.02em; margin: 10px 0 8px; }
+  .b-cmp-lead { font-size: 0.82rem; line-height: 1.55; color: #b9c2db; margin-bottom: 12px; }
+  .b-cmp-steps { list-style: none; padding: 0; margin: 0 0 14px; display: flex; flex-direction: column; gap: 7px; }
+  .b-cmp-steps li { display: flex; align-items: center; gap: 9px; font-size: 0.8rem; font-weight: 600; color: #dfe4f0; }
+  .b-cmp-stepnum { flex: none; display: flex; align-items: center; justify-content: center; width: 21px; height: 21px; border-radius: 50%; background: rgba(255,194,51,0.16); color: var(--color-amber); font-family: 'Bricolage Grotesque Variable', sans-serif; font-weight: 800; font-size: 0.72rem; }
+  .b-cmp-example { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; color: #8b96b8; margin-bottom: 8px; }
+  .b-cmp-btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; height: 48px; margin-top: 14px; border-radius: 12px;
+    background: var(--color-amber); color: var(--color-navy);
+    font-family: 'Hanken Grotesk Variable', sans-serif; font-weight: 800; font-size: 0.95rem;
+    transition: background 0.15s, transform 0.15s;
+  }
+  .b-cmp-btn:hover { background: var(--color-amber-hover); transform: translateY(-2px); }
   .b-cmp-row { display: flex; align-items: stretch; gap: 9px; }
-  .b-cmp-card { flex: 1; border: 1px solid var(--color-card-border); border-radius: 11px; padding: 11px; }
+  .b-cmp-card { flex: 1; background: var(--color-card); border: 1px solid var(--color-card-border); border-radius: 11px; padding: 11px; }
   .b-cmp-img { display: block; aspect-ratio: 4/3; background: #fff; border: 1px solid #f1efe7; border-radius: 6px; overflow: hidden; margin-bottom: 8px; }
   .b-cmp-img img { width: 100%; height: 100%; object-fit: contain; padding: 6px; }
   .b-cmp-title { font-size: 0.72rem; font-weight: 700; color: var(--color-text-primary); line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
-  .b-cmp-price { font-family: 'Bricolage Grotesque', sans-serif; font-size: 0.92rem; font-weight: 800; color: var(--color-navy); margin: 2px 0 8px; }
+  .b-cmp-price { font-family: 'Bricolage Grotesque Variable', sans-serif; font-size: 0.92rem; font-weight: 800; color: var(--color-navy); margin: 2px 0 8px; }
   .b-cmp-spec { display: flex; justify-content: space-between; font-size: 0.68rem; padding: 4px 0; border-top: 1px solid #f4f2ec; }
   .b-cmp-spec span { color: var(--color-text-muted); }
   .b-cmp-spec b { color: var(--color-text-navy); font-weight: 700; }
-  .vs-chip { align-self: center; flex: none; display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 50%; background: var(--color-navy); color: #fff; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 0.7rem; box-shadow: 0 2px 8px rgba(22,34,76,0.3); }
+  .vs-chip { align-self: center; flex: none; display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 50%; background: var(--color-amber); color: var(--color-navy); font-family: 'Bricolage Grotesque Variable', sans-serif; font-weight: 800; font-size: 0.7rem; box-shadow: 0 2px 8px rgba(0,0,0,0.35); }
 
   /* ── STAT ── */
   .b-stat { grid-column: 1 / -1; display: flex; align-items: center; gap: 13px; background: var(--color-navy); border-radius: var(--radius-lg); padding: 15px 18px; color: #fff; }
-  .b-stat-num { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 1.9rem; color: var(--color-amber); letter-spacing: -0.02em; }
+  .b-stat-num { font-family: 'Bricolage Grotesque Variable', sans-serif; font-weight: 800; font-size: 1.9rem; color: var(--color-amber); letter-spacing: -0.02em; }
   .b-stat-txt { font-size: 0.78rem; color: #b9c2db; line-height: 1.4; }
 
   .b-note { grid-column: 1 / -1; text-align: center; font-size: 0.78rem; color: var(--color-text-soft); padding: var(--space-sm) 0; }
@@ -333,7 +380,7 @@ function screenLabel(p: any): string {
   .b-faq-h { margin-bottom: 12px; }
   .faq-list { display: flex; flex-direction: column; gap: 8px; }
   .faq-item { background: var(--color-card); border: 1px solid var(--color-card-border); border-radius: var(--radius-md); box-shadow: var(--shadow-card); overflow: hidden; }
-  .faq-q { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 15px; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 0.9rem; color: var(--color-navy); }
+  .faq-q { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 15px; font-family: 'Bricolage Grotesque Variable', sans-serif; font-weight: 700; font-size: 0.9rem; color: var(--color-navy); }
   .faq-q::-webkit-details-marker { display: none; }
   .faq-chevron { flex: none; color: var(--color-text-soft); transition: transform 0.2s ease; }
   .faq-item[open] .faq-chevron { transform: rotate(180deg); }
