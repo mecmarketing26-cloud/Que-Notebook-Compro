@@ -193,6 +193,37 @@ export const PRODUCTO = {
   disclosure: 'Link de afiliado — si comprás, me llevo una comisión sin costo extra para vos.',
 } as const;
 
+/**
+ * Preguntas frecuentes (home + JSON-LD FAQPage para rich snippets).
+ * Respuestas editables — cambialas cuando quieras; ya indexan como están.
+ */
+export const FAQ = [
+  {
+    q: '¿Cómo seleccionamos las notebooks?',
+    a: 'Analizamos las notebooks con oferta y stock real en Mercado Libre Argentina y las ordenamos por specs y relación precio-calidad (RAM, procesador, SSD, placa de video y precio). No hay ranking pago: el orden sale de los datos.',
+  },
+  {
+    q: '¿Los precios se actualizan automáticamente?',
+    a: 'Sí. Refrescamos el catálogo de forma automática varias veces al día y, cuando mostramos un equipo, verificamos su precio y stock en vivo. De todas formas son precios de referencia: el valor final lo confirmás en Mercado Libre.',
+  },
+  {
+    q: '¿Qué notebook necesito para estudiar?',
+    a: 'Para estudiar y oficina, con 8 GB de RAM, un SSD y un procesador tipo i5/Ryzen 5 alcanza de sobra. Si programás o editás, conviene 16 GB. Hacé el test y te recomendamos modelos concretos según tu uso y presupuesto.',
+  },
+  {
+    q: '¿Cuánta memoria RAM debería tener?',
+    a: '8 GB es el mínimo para uso general y estudio; 16 GB es el punto ideal para multitarea, programación y diseño; 32 GB o más solo si trabajás con video 4K, 3D o varias máquinas virtuales.',
+  },
+  {
+    q: '¿Puedo comparar modelos de distintas marcas?',
+    a: 'Sí. Elegís 2 modelos de cualquier marca y los comparás lado a lado: specs, precio y un veredicto por tipo de uso. Entrá a "Comparar", buscá los modelos en nuestra base y listo.',
+  },
+  {
+    q: '¿La página vende directamente las notebooks?',
+    a: 'No. Somos un comparador independiente: no vendemos ni tenemos stock. Te ayudamos a elegir y te llevamos al producto en Mercado Libre con un enlace de afiliado (si comprás, ganamos una comisión sin costo extra para vos).',
+  },
+] as const;
+
 export const RESULT = {
   title: 'Tus notebooks',
   subtitle: 'Las que mejor matchean lo que buscás. Precio y stock en vivo.',

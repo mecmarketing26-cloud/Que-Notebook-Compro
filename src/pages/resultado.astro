@@ -13,6 +13,18 @@ import type { NotebookProduct } from '../lib/types';
 const filters = queryToFilters(Astro.url.searchParams);
 const hardPrice = Astro.url.searchParams.get('strict') === '1';
 
+// Búsqueda por texto (barra del home): filtra por título + specs (marca, CPU, GPU…).
+// TODO(search): acá se puede enganchar una lógica más rica — sinónimos, mapear
+// usos ("notebook para arquitectura" → filtros) o un índice de búsqueda real.
+const q = (Astro.url.searchParams.get('q') ?? '').trim();
+const qTokens = q.toLowerCase().split(/\s+/).filter(Boolean);
+const matchQ = qTokens.length
+  ? (p: NotebookProduct) => {
+      const hay = `${p.title} ${p.specs?.brand ?? ''} ${p.specs?.processorLine ?? ''} ${p.specs?.gpuModel ?? ''} ${p.specs?.os ?? ''}`.toLowerCase();
+      return qTokens.every((t) => hay.includes(t));
+    }
+  : undefined;
+
 // REAL-TIME: decide over the whole live ML catalog (cached price-aware index).
 let products: NotebookProduct[] = [];
 let relaxed = false;
@@ -21,7 +33,7 @@ let building = false;
 let priceEmpty = false;
 let similar: NotebookProduct[] = [];
 try {
-  const result = await liveSearch(filters, { max: 12, hardPrice });
+  const result = await liveSearch(filters, { max: 12, hardPrice, match: matchQ });
   products = result.products;
   relaxed = result.relaxed;
   universe = result.universe;
@@ -37,11 +49,14 @@ const catalogReady = catalogStatus().ready;
 const emptyMsg = !catalogReady
   ? RESULT.empty_no_creds
   : RESULT.empty_no_match;
-const subtitle = relaxed
-  ? RESULT.relaxed
-  : universe
-    ? 'Ordenadas de mejor a peor entre todas las notebooks disponibles de Mercado Libre.'
-    : RESULT.subtitle;
+const heading = q ? `Resultados para “${q}”` : RESULT.title;
+const subtitle = q
+  ? 'Notebooks que coinciden con tu búsqueda, ordenadas de mejor a peor.'
+  : relaxed
+    ? RESULT.relaxed
+    : universe
+      ? 'Ordenadas de mejor a peor entre todas las notebooks disponibles de Mercado Libre.'
+      : RESULT.subtitle;
 
 // Para el estado "no hay en este precio": botones para cambiar SOLO el rango,
 // conservando el resto de los filtros (specs / sistema operativo).
@@ -68,7 +83,7 @@ const fmt = (n: number) => new Intl.NumberFormat('es-AR', { style: 'currency', c
   <main class="result-page">
     <div class="result-content">
       <header class="result-header">
-        <h1 class="result-title">{RESULT.title}</h1>
+        <h1 class="result-title">{heading}</h1>
         <p class="result-subtitle">{subtitle}</p>
       </header>
 

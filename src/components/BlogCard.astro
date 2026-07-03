@@ -1,0 +1,37 @@
+---
+/**
+ * Tarjeta de guía/artículo del blog. Reutilizable en el índice del blog y en la
+ * home ("Aprendé antes de comprar"). Mismo sistema de diseño (tarjeta blanca,
+ * borde redondeado, sombra suave). `cover` = imagen de portada (el equipo #1 del
+ * ranking); si falta, fallback sólido y prolijo.
+ */
+interface Props {
+  slug: string;
+  title: string;
+  category: string;
+  cover?: string | null;
+  cta?: string;
+}
+const { slug, title, category, cover, cta = 'Ver guía →' } = Astro.props;
+---
+
+<a href={`/blog/${slug}`} class="blogcard lift">
+  {cover
+    ? <img class="blogcard-img" src={cover} alt="" loading="lazy" decoding="async" />
+    : <span class="blogcard-ph" aria-hidden="true"></span>}
+  <div class="blogcard-body">
+    <span class="blogcard-cat">{category}</span>
+    <div class="blogcard-title">{title}</div>
+    <span class="blogcard-cta">{cta}</span>
+  </div>
+</a>
+
+<style>
+  .blogcard { display: flex; flex-direction: column; background: var(--color-card); border: 1px solid var(--color-card-border); border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow-card); }
+  .blogcard-img { width: 100%; aspect-ratio: 16 / 10; object-fit: contain; background: #fff; border-bottom: 1px solid var(--color-card-border); padding: 8px; }
+  .blogcard-ph { width: 100%; aspect-ratio: 16 / 10; background: var(--color-tile); border-bottom: 1px solid var(--color-card-border); }
+  .blogcard-body { padding: 12px 13px 14px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .blogcard-cat { font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--color-blue); }
+  .blogcard-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 0.9rem; line-height: 1.18; color: var(--color-navy); flex: 1; }
+  .blogcard-cta { font-size: 0.72rem; color: var(--color-text-soft); font-weight: 700; }
+</style>
