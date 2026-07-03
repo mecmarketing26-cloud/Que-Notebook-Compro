@@ -50,7 +50,7 @@
 }
 
 /* Head */
-.quiz-head { padding: 26px 22px 6px; animation: quizFade 0.3s ease both; }
+.quiz-head { padding: 16px 22px 4px; animation: quizFade 0.3s ease both; }
 .quiz-eyebrow {
   font-size: 0.72rem;
   letter-spacing: 0.05em;
@@ -62,7 +62,7 @@
 .quiz-q {
   font-family: 'Bricolage Grotesque', sans-serif;
   font-weight: 800;
-  font-size: clamp(1.55rem, 6vw, 1.9rem);
+  font-size: clamp(1.35rem, 5.4vw, 1.8rem);
   line-height: 1.1;
   letter-spacing: -0.03em;
   margin: 0;
@@ -70,13 +70,14 @@
 .quiz-subq {
   font-size: 0.85rem;
   color: rgba(255, 255, 255, 0.62);
-  line-height: 1.5;
-  margin: 14px 0 0;
+  line-height: 1.45;
+  margin: 9px 0 0;
 }
 
-/* Options — área flexible; scrollea si el contenido no entra, para que el pie no se corte */
-.quiz-options-wrap { flex: 1; min-height: 0; overflow-y: auto; padding: 18px 22px 8px; }
-.quiz-opts { display: grid; gap: 10px; }
+/* Options — llenan el alto disponible y quedan CENTRADAS (sin scroll: todo entra
+   en el viewport). Se compacta con @media (max-height) para pantallas bajas. */
+.quiz-options-wrap { flex: 1; min-height: 0; overflow: visible; display: flex; flex-direction: column; justify-content: center; padding: 12px 22px 6px; }
+.quiz-opts { display: grid; gap: 9px; }
 .qopt {
   position: relative;
   overflow: hidden;
@@ -85,8 +86,8 @@
   align-items: center;
   gap: 12px;
   cursor: pointer;
-  border-radius: 15px;
-  padding: 13px 14px;
+  border-radius: 14px;
+  padding: 11px 13px;
   background: #1d2a57;
   border: 2px solid rgba(255, 255, 255, 0.12);
   color: #fff;
@@ -107,9 +108,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
   background: rgba(255, 194, 51, 0.16);
   color: var(--color-amber);
 }
@@ -119,10 +120,10 @@
 .qopt-check { position: relative; flex: none; display: flex; }
 
 /* Foot — anclado abajo, nunca se comprime (el botón siempre visible) */
-.quiz-foot { flex: none; padding: 14px 22px 22px; }
+.quiz-foot { flex: none; padding: 12px 22px 18px; }
 .quiz-next {
   width: 100%;
-  height: 54px;
+  height: 50px;
   border: none;
   border-radius: 13px;
   font-family: 'Hanken Grotesk', sans-serif;
@@ -171,6 +172,27 @@
 
 @keyframes quizSpin { to { transform: rotate(360deg); } }
 @keyframes quizFade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Pantallas bajas: compactar para que TODO entre sin scroll. */
+@media (max-height: 740px) {
+  .quiz-top { padding: 12px 18px 2px; }
+  .quiz-head { padding: 10px 20px 2px; }
+  .quiz-q { font-size: clamp(1.2rem, 5vw, 1.5rem); }
+  .quiz-subq { margin-top: 6px; font-size: 0.8rem; line-height: 1.35; }
+  .quiz-options-wrap { padding: 8px 20px 4px; }
+  .quiz-opts { gap: 7px; }
+  .qopt { padding: 9px 12px; }
+  .qopt-ico { width: 32px; height: 32px; }
+  .qopt-sub { font-size: 0.68rem; margin-top: 1px; }
+  .quiz-foot { padding: 8px 20px 12px; }
+  .quiz-next { height: 46px; }
+  .quiz-disc { margin-top: 6px; font-size: 0.66rem; }
+}
+/* Muy bajas: priorizamos que entren todas las opciones. */
+@media (max-height: 640px) {
+  .quiz-subq { display: none; }
+  .qopt-sub { display: none; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .quiz-head { animation: none; }
