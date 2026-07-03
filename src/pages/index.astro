@@ -51,8 +51,6 @@ const guides = GUIDE_SLUGS.map((slug) => {
   return { slug, title: t?.h1 ?? slug, category: categoryFor(slug), cover: t ? coverFor(t) : null };
 });
 
-// Palabra animada del hero (rota suave; la 1ª se pinta en el server).
-const HERO_WORDS = ['notebook', 'laptop', 'MacBook', 'Chromebook', 'ultrabook'];
 // Chips de búsqueda rápida (deep-link a /resultado?q=...).
 const SEARCH_CHIPS = ['Lenovo', 'ASUS', 'Acer', 'HP', 'RTX 4060', 'Ryzen 7'];
 
@@ -93,7 +91,7 @@ function screenLabel(p: any): string {
             <path d="M9.4 19l.4-1.6h4.4l.4 1.6"></path>
           </svg>
         </span>
-        <h1 class="b-hero-title">Encontrá la <span class="rotator" data-words={HERO_WORDS.join(',')}><span class="rotator-sizer" aria-hidden="true">Chromebook</span><span class="rotator-word" id="heroWord">{HERO_WORDS[0]}</span></span> que realmente te conviene</h1>
+        <h1 class="b-hero-title">Dejá de googlear.<br>Tu notebook <span class="hl">ideal</span> está acá.</h1>
         <a href={quizHref} class="b-hero-btn ctaQuiz">
           Encontrar mi equipo
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16224C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"></path></svg>
@@ -224,28 +222,6 @@ function screenLabel(p: any): string {
   <Footer />
 </BaseLayout>
 
-<script is:inline>
-  // Palabra animada del hero: rota suave en loop. Respeta prefers-reduced-motion
-  // (si está activo, queda la palabra fija sin animación).
-  (function () {
-    var el = document.getElementById('heroWord');
-    if (!el) return;
-    var box = el.closest('.rotator');
-    var words = ((box && box.getAttribute('data-words')) || '').split(',').filter(Boolean);
-    if (words.length < 2) return;
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    var i = 0;
-    setInterval(function () {
-      el.classList.add('is-out');
-      setTimeout(function () {
-        i = (i + 1) % words.length;
-        el.textContent = words[i];
-        el.classList.remove('is-out');
-      }, 380);
-    }, 2200);
-  })();
-</script>
-
 <style>
   .home { padding-top: 64px; background: var(--color-bg-deep); }
   .bento {
@@ -268,18 +244,13 @@ function screenLabel(p: any): string {
   }
   /* Círculo del hero: ya no vacío — lleva una ilustración de notebook (ámbar),
      detrás del texto (el texto/CTA van con z-index:1). */
-  .b-hero-blob { position: absolute; right: -14px; top: -14px; width: 130px; height: 130px; border-radius: 50%; background: rgba(255,194,51,0.13); display: flex; align-items: center; justify-content: center; z-index: 0; }
-  .b-hero-blob svg { transform: translate(-10px, 12px); opacity: 0.9; }
+  .b-hero-blob { position: absolute; right: -8px; top: -8px; width: 88px; height: 88px; border-radius: 50%; background: rgba(255,194,51,0.13); display: flex; align-items: center; justify-content: center; z-index: 0; }
+  .b-hero-blob svg { width: 44px; height: 44px; transform: none; opacity: 0.85; }
   .b-hero-eyebrow, .b-hero-title, .b-hero-btn, .b-hero-microcopy { position: relative; z-index: 1; }
   .b-hero-microcopy { margin-top: 11px; font-size: 0.74rem; font-weight: 500; color: rgba(255,255,255,0.6); }
 
-  /* Palabra animada del hero (ámbar). El "sizer" reserva el ancho de la más larga
-     para que el título no salte al rotar. */
-  .rotator { position: relative; display: inline-block; }
-  .rotator-sizer { visibility: hidden; }
-  .rotator-word { position: absolute; left: 0; top: 0; color: var(--color-amber); white-space: nowrap; transition: opacity 0.38s ease, transform 0.38s ease; }
-  .rotator-word.is-out { opacity: 0; transform: translateY(-0.28em); }
-  @media (prefers-reduced-motion: reduce) { .rotator-word { transition: none; } }
+  /* Palabra destacada del título (mismo ámbar del sistema). */
+  .b-hero-title .hl { color: var(--color-amber); }
   .b-hero-eyebrow { position: relative; display: block; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-amber); }
   .b-hero-title { position: relative; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 1.85rem; line-height: 1.0; letter-spacing: -0.02em; margin: 10px 0 16px; }
   .b-hero-btn {
