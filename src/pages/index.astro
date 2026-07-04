@@ -22,6 +22,18 @@ const top = featured[0];
 const vsA = featured[1];
 const vsB = featured[2];
 
+// Hero "palabra gigante": la foto rota junto con la palabra. Cada palabra usa
+// una foto REAL del catálogo (MacBook ⇒ foto de una MacBook disponible).
+const heroPool = allProducts();
+const heroIsApple = (x: any) => /apple|macbook/i.test(x.title);
+// Solo título explícito: la foto tiene que "leerse" como Chromebook.
+const heroIsChrome = (x: any) => /chromebook/i.test(x.title);
+const heroFind = (pred: (x: any) => boolean) => heroPool.find((x) => pred(x) && x.image)?.image;
+const heroBase = heroFind((x) => !heroIsApple(x) && !heroIsChrome(x)) ?? heroPool[0]?.image ?? '';
+const heroLaptop = heroPool.filter((x) => !heroIsApple(x) && !heroIsChrome(x) && x.image && x.image !== heroBase)[1]?.image;
+// Mismo orden que WORDS en el script: notebook → MacBook → Chromebook → laptop.
+const heroImgs = [heroBase, heroFind(heroIsApple) ?? heroBase, heroFind(heroIsChrome) ?? heroBase, heroLaptop ?? heroBase];
+
 // "Por uso" — 6 íconos de línea que deep-linkean a resultados ya filtrados.
 const USOS: Array<{ key: string; label: string; svg: string }> = [
   { key: 'gaming', label: 'Gaming', svg: '<line x1="6" x2="10" y1="11" y2="11"/><line x1="8" x2="8" y1="9" y2="13"/><line x1="15" x2="15.01" y1="12" y2="12"/><line x1="18" x2="18.01" y1="10" y2="10"/><path d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.544-.604-6.584-.685-7.258"/>' },
@@ -100,37 +112,26 @@ function screenLabel(p: any): string {
   <main class="home">
     <div class="bento">
 
-      <!-- HERO (pantalla completa: título + CTA es lo único visible al entrar) -->
+      <!-- HERO 3c "Palabra gigante": la palabra rotativa es la protagonista.
+           Centrado, sin ícono flotante ni flecha de scroll; termina donde
+           termina el contenido. -->
       <section class="b-hero">
-        <span class="b-hero-blob" aria-hidden="true">
-          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#FFC233" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="4" y="5" width="16" height="11" rx="1.5"></rect>
-            <path d="M2 19h20"></path>
-            <path d="M9.4 19l.4-1.6h4.4l.4 1.6"></path>
-          </svg>
-        </span>
-        <h1 class="b-hero-title">Dejá de googlear.<br>Tu <span class="hl rot-word" id="rotWord">notebook</span> ideal está acá.</h1>
+        <h1 class="b-hero-title">
+          <span class="b-hero-small">¿Qué</span>
+          <span class="b-hero-word" id="heroWord">notebook</span>
+          <span class="b-hero-small">compro?</span>
+        </h1>
+        <p class="b-hero-sub">Contestá 5 preguntas y te decimos cuál es para vos.</p>
+        {heroImgs[0] && (
+          <span class="b-hero-shot">
+            <img id="heroImg" src={heroImgs[0]} data-imgs={JSON.stringify(heroImgs)} alt="" width="230" height="150" fetchpriority="high" decoding="async" />
+          </span>
+        )}
         <a href={quizHref} class="b-hero-btn ctaQuiz">
           {CTA_QUIZ.label}
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16224C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"></path></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E2A5A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"></path></svg>
         </a>
-        <ul class="b-hero-perks">
-          <li>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>
-            Gratis
-          </li>
-          <li>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="17" x2="22" y1="8" y2="13"></line><line x1="22" x2="17" y1="8" y2="13"></line></svg>
-            Sin registro
-          </li>
-          <li>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
-            Menos de 2 min
-          </li>
-        </ul>
-        <a href="#contenido" class="b-hero-scroll" aria-label="Deslizá para ver el resto">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
-        </a>
+        <p class="b-hero-trust">✓ Gratis · Sin registro · Menos de 2 min</p>
       </section>
 
       <!-- BUSCADOR -->
@@ -273,20 +274,24 @@ function screenLabel(p: any): string {
 </BaseLayout>
 
 <script>
-  // Rota la palabra ámbar del hero. El HTML llega server-rendered con
-  // "notebook" (la keyword del H1 para SEO); la rotación es solo visual.
-  const rotEl = document.getElementById('rotWord');
-  const WORDS = ['notebook', 'equipo', 'MacBook', 'laptop', 'Chromebook'];
-  if (rotEl && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    let wi = 0;
+  // Hero "palabra gigante": palabra y foto rotan juntas (MacBook ⇒ foto de
+  // MacBook). El HTML llega server-rendered con "notebook" (keyword del H1).
+  const wordEl = document.getElementById('heroWord');
+  const imgEl = document.getElementById('heroImg') as HTMLImageElement | null;
+  const WORDS = ['notebook', 'MacBook', 'Chromebook', 'laptop'];
+  const IMGS: string[] = imgEl?.dataset.imgs ? JSON.parse(imgEl.dataset.imgs) : [];
+  if (wordEl && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    // Precargar las fotos para que el swap nunca muestre un hueco.
+    IMGS.forEach((src) => { const im = new Image(); im.src = src; });
+    let i = 0;
     setInterval(() => {
-      rotEl.classList.add('is-out');
-      setTimeout(() => {
-        wi = (wi + 1) % WORDS.length;
-        rotEl.textContent = WORDS[wi];
-        rotEl.classList.remove('is-out');
-      }, 220);
-    }, 2600);
+      i = (i + 1) % WORDS.length;
+      wordEl.textContent = WORDS[i];
+      if (imgEl && IMGS[i]) imgEl.src = IMGS[i];
+      wordEl.classList.remove('in');
+      void (wordEl as HTMLElement).offsetWidth; // reinicia la animación
+      wordEl.classList.add('in');
+    }, 2200);
   }
 </script>
 
@@ -304,63 +309,45 @@ function screenLabel(p: any): string {
 
   .b-card-h { font-family: 'Bricolage Grotesque Variable', sans-serif; font-weight: 700; font-size: 0.95rem; color: var(--color-navy); }
 
-  /* ── HERO (primera pantalla completa: solo título + CTA a la vista) ── */
+  /* ── HERO 3c "Palabra gigante" ──
+     Jerarquía invertida: "¿Qué … compro?" chico y apagado; la palabra rotativa
+     es la protagonista (gigante, ámbar, centrada). min-height en la palabra
+     reserva su línea: el swap nunca deja hueco ni salta el layout. */
   .b-hero {
-    grid-column: 1 / -1; position: relative; overflow: hidden;
-    /* 100dvh menos header (64px) + padding superior del bento: el resto del
-       contenido queda debajo del fold y aparece al scrollear. */
-    min-height: calc(100dvh - 64px - var(--space-lg) - 10px);
-    display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
-    background: var(--color-navy); color: #fff;
-    border-radius: var(--radius-lg); padding: 24px 22px 56px;
+    grid-column: 1 / -1;
+    background: #1E2A5A; color: #fff;
+    border-radius: var(--radius-lg); padding: 32px 22px 26px;
+    text-align: center;
   }
-  /* Círculo del hero: ya no vacío — lleva una ilustración de notebook (ámbar),
-     detrás del texto (el texto/CTA van con z-index:1). */
-  .b-hero-blob { position: absolute; right: -8px; top: -8px; width: 88px; height: 88px; border-radius: 50%; background: rgba(255,194,51,0.13); display: flex; align-items: center; justify-content: center; z-index: 0; }
-  .b-hero-blob svg { width: 44px; height: 44px; transform: none; opacity: 0.85; }
-  .b-hero-eyebrow, .b-hero-title, .b-hero-btn, .b-hero-perks { position: relative; z-index: 1; }
-
-  /* Palabra destacada del título (mismo ámbar del sistema), rotando entre
-     notebook / equipo / MacBook / laptop / Chromebook. */
-  .b-hero-title .hl { color: var(--color-amber); }
-  .rot-word { display: inline-block; transition: opacity 0.22s ease, transform 0.22s ease; }
-  .rot-word.is-out { opacity: 0; transform: translateY(9px); }
-  .b-hero-eyebrow { position: relative; display: block; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-amber); }
-  .b-hero-title { position: relative; font-family: 'Bricolage Grotesque Variable', sans-serif; font-weight: 800; font-size: clamp(2.05rem, 8.5vw, 2.6rem); line-height: 1.02; letter-spacing: -0.02em; margin: 10px 0 22px; }
-  .b-hero-btn {
-    position: relative; display: inline-flex; align-items: center; gap: 8px;
-    height: 50px; padding: 0 24px; border-radius: 12px;
-    background: var(--color-amber); color: var(--color-navy);
-    font-family: 'Hanken Grotesk Variable', sans-serif; font-weight: 800; font-size: 1rem;
+  .b-hero-title { display: flex; flex-direction: column; font-family: 'Bricolage Grotesque Variable', sans-serif; font-weight: 800; }
+  .b-hero-small { font-size: 24px; color: #C6CCDF; line-height: 1.1; }
+  .b-hero-word {
+    font-size: clamp(40px, 12.5vw, 52px); color: var(--color-amber);
+    line-height: 1.05; letter-spacing: -0.03em; min-height: 56px; margin: 2px 0;
   }
-
-  /* Perks como chips (antes: texto plano "Gratis · Sin registro · …") */
-  .b-hero-perks { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 0; padding: 0; }
-  .b-hero-perks li {
-    display: inline-flex; align-items: center; gap: 6px;
-    font-size: 0.73rem; font-weight: 600; color: #dfe4f0;
-    background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.14);
-    border-radius: var(--radius-pill); padding: 6px 12px;
+  .b-hero-word.in { animation: wordIn 0.45s cubic-bezier(0.2, 0.7, 0.3, 1); }
+  @keyframes wordIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
-  .b-hero-perks svg { color: var(--color-amber); flex: none; }
-
-  /* Indicador de scroll (hay más contenido abajo) */
-  @keyframes heroScrollNudge {
-    0%, 100% { transform: translate(-50%, 0); }
-    50%      { transform: translate(-50%, 6px); }
-  }
-  .b-hero-scroll {
-    position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%);
+  .b-hero-sub { font-size: 15px; line-height: 1.5; color: #C6CCDF; max-width: 280px; margin: 18px auto 0; }
+  /* La foto (JPG con fondo blanco de ML) va en un tile blanco redondeado, como
+     todas las imágenes de producto del sitio. */
+  .b-hero-shot {
     display: flex; align-items: center; justify-content: center;
-    width: 36px; height: 36px; border-radius: 50%;
-    color: rgba(255,255,255,0.65); background: rgba(255,255,255,0.07);
-    border: 1px solid rgba(255,255,255,0.13);
-    animation: heroScrollNudge 1.8s ease-in-out infinite;
+    width: 100%; max-width: 250px; height: 150px; margin: 22px auto 0;
+    background: #fff; border-radius: 14px; overflow: hidden;
   }
-  .b-hero-scroll:hover { color: var(--color-amber); }
+  .b-hero-shot img { width: 100%; height: 100%; object-fit: contain; padding: 10px; }
+  .b-hero-btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; height: 52px; margin-top: 20px; border-radius: 13px;
+    background: var(--color-amber); color: #1E2A5A;
+    font-family: 'Hanken Grotesk Variable', sans-serif; font-weight: 800; font-size: 15px;
+  }
+  .b-hero-trust { font-size: 12px; font-weight: 600; color: #AAB2CF; margin-top: 12px; }
   @media (prefers-reduced-motion: reduce) {
-    .b-hero-scroll { animation: none; }
-    .rot-word { transition: none; }
+    .b-hero-word.in { animation: none; }
   }
 
   /* ── POR USO ── */
