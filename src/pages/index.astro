@@ -22,17 +22,10 @@ const top = featured[0];
 const vsA = featured[1];
 const vsB = featured[2];
 
-// Hero "palabra gigante": la foto rota junto con la palabra. Cada palabra usa
-// una foto REAL del catálogo (MacBook ⇒ foto de una MacBook disponible).
-const heroPool = allProducts();
-const heroIsApple = (x: any) => /apple|macbook/i.test(x.title);
-// Solo título explícito: la foto tiene que "leerse" como Chromebook.
-const heroIsChrome = (x: any) => /chromebook/i.test(x.title);
-const heroFind = (pred: (x: any) => boolean) => heroPool.find((x) => pred(x) && x.image)?.image;
-const heroBase = heroFind((x) => !heroIsApple(x) && !heroIsChrome(x)) ?? heroPool[0]?.image ?? '';
-const heroLaptop = heroPool.filter((x) => !heroIsApple(x) && !heroIsChrome(x) && x.image && x.image !== heroBase)[1]?.image;
+// Hero "palabra gigante": los 4 equipos son PNGs transparentes recortados de
+// fotos reales del catálogo (regenerables con `node scripts/hero-cutouts.mjs`).
 // Mismo orden que WORDS en el script: notebook → MacBook → Chromebook → laptop.
-const heroImgs = [heroBase, heroFind(heroIsApple) ?? heroBase, heroFind(heroIsChrome) ?? heroBase, heroLaptop ?? heroBase];
+const HERO_DEVICES = ['/img/hero/notebook.png', '/img/hero/macbook.png', '/img/hero/chromebook.png', '/img/hero/laptop.png'];
 
 // "Por uso" — 6 íconos de línea que deep-linkean a resultados ya filtrados.
 const USOS: Array<{ key: string; label: string; svg: string }> = [
@@ -122,11 +115,25 @@ function screenLabel(p: any): string {
           <span class="b-hero-small">compro?</span>
         </h1>
         <p class="b-hero-sub">Contestá 5 preguntas y te decimos cuál es para vos.</p>
-        {heroImgs[0] && (
-          <span class="b-hero-shot">
-            <img id="heroImg" src={heroImgs[0]} data-imgs={JSON.stringify(heroImgs)} alt="" width="230" height="150" fetchpriority="high" decoding="async" />
-          </span>
-        )}
+        <!-- Escenario con profundidad: los 4 equipos SIEMPRE visibles; el de la
+             palabra activa pasa al frente, el resto queda detrás, chico y
+             difuminado. Glow central para despegarlos del navy. -->
+        <div class="b-hero-stage" aria-hidden="true">
+          <span class="b-hero-glow"></span>
+          {HERO_DEVICES.map((src, i) => (
+            <img
+              class="b-hero-dev"
+              data-idx={i}
+              data-pos={i}
+              src={src}
+              alt=""
+              width="320"
+              height="230"
+              fetchpriority={i === 0 ? 'high' : undefined}
+              decoding="async"
+            />
+          ))}
+        </div>
         <a href={quizHref} class="b-hero-btn ctaQuiz">
           {CTA_QUIZ.label}
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E2A5A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"></path></svg>
@@ -274,23 +281,23 @@ function screenLabel(p: any): string {
 </BaseLayout>
 
 <script>
-  // Hero "palabra gigante": palabra y foto rotan juntas (MacBook ⇒ foto de
-  // MacBook). El HTML llega server-rendered con "notebook" (keyword del H1).
+  // Hero "palabra gigante": la palabra rota y el equipo de esa palabra pasa al
+  // frente del escenario (los 4 están siempre visibles, en profundidad). El JS
+  // solo actualiza data-pos; el movimiento lo hace la transición CSS.
   const wordEl = document.getElementById('heroWord');
-  const imgEl = document.getElementById('heroImg') as HTMLImageElement | null;
+  const devices = Array.from(document.querySelectorAll<HTMLElement>('.b-hero-dev'));
   const WORDS = ['notebook', 'MacBook', 'Chromebook', 'laptop'];
-  const IMGS: string[] = imgEl?.dataset.imgs ? JSON.parse(imgEl.dataset.imgs) : [];
-  if (wordEl && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    // Precargar las fotos para que el swap nunca muestre un hueco.
-    IMGS.forEach((src) => { const im = new Image(); im.src = src; });
-    let i = 0;
+  if (wordEl && devices.length && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    let active = 0;
     setInterval(() => {
-      i = (i + 1) % WORDS.length;
-      wordEl.textContent = WORDS[i];
-      if (imgEl && IMGS[i]) imgEl.src = IMGS[i];
+      active = (active + 1) % WORDS.length;
+      wordEl.textContent = WORDS[active];
       wordEl.classList.remove('in');
       void (wordEl as HTMLElement).offsetWidth; // reinicia la animación
       wordEl.classList.add('in');
+      for (const dev of devices) {
+        dev.dataset.pos = String((Number(dev.dataset.idx) - active + WORDS.length) % WORDS.length);
+      }
     }, 2200);
   }
 </script>
@@ -315,6 +322,10 @@ function screenLabel(p: any): string {
      reserva su línea: el swap nunca deja hueco ni salta el layout. */
   .b-hero {
     grid-column: 1 / -1;
+    /* Primera pantalla completa: ninguna otra sección se asoma hasta scrollear
+       (100dvh menos header fijo y padding superior del bento). */
+    min-height: calc(100dvh - 64px - var(--space-lg));
+    display: flex; flex-direction: column; justify-content: center;
     background: #1E2A5A; color: #fff;
     border-radius: var(--radius-lg); padding: 32px 22px 26px;
     text-align: center;
@@ -331,14 +342,27 @@ function screenLabel(p: any): string {
     to   { opacity: 1; transform: translateY(0); }
   }
   .b-hero-sub { font-size: 15px; line-height: 1.5; color: #C6CCDF; max-width: 280px; margin: 18px auto 0; }
-  /* La foto (JPG con fondo blanco de ML) va en un tile blanco redondeado, como
-     todas las imágenes de producto del sitio. */
-  .b-hero-shot {
-    display: flex; align-items: center; justify-content: center;
-    width: 100%; max-width: 250px; height: 150px; margin: 22px auto 0;
-    background: #fff; border-radius: 14px; overflow: hidden;
+
+  /* Escenario de equipos: PNGs transparentes apilados con profundidad.
+     data-pos: 0 = frente · 1 = atrás-derecha · 2 = fondo · 3 = atrás-izquierda.
+     El JS solo cambia data-pos; el resto lo hace la transición CSS. */
+  .b-hero-stage { position: relative; width: 100%; max-width: 330px; height: 195px; margin: 22px auto 0; }
+  .b-hero-glow {
+    position: absolute; left: 50%; top: 54%; transform: translate(-50%, -50%);
+    width: 270px; height: 175px; border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(255,194,51,0.34), rgba(255,194,51,0.10) 55%, transparent 78%);
+    filter: blur(8px);
   }
-  .b-hero-shot img { width: 100%; height: 100%; object-fit: contain; padding: 10px; }
+  .b-hero-dev {
+    position: absolute; left: 50%; top: 50%;
+    width: auto; height: auto; max-width: 295px; max-height: 185px;
+    transition: transform 0.55s cubic-bezier(0.2, 0.7, 0.3, 1), opacity 0.55s ease, filter 0.55s ease;
+    will-change: transform, opacity;
+  }
+  .b-hero-dev[data-pos="0"] { transform: translate(-50%, -50%) scale(1); opacity: 1; z-index: 3; filter: drop-shadow(0 20px 26px rgba(0, 0, 0, 0.5)); }
+  .b-hero-dev[data-pos="1"] { transform: translate(calc(-50% + 82px), -56%) scale(0.6); opacity: 0.35; z-index: 2; filter: blur(1.5px); }
+  .b-hero-dev[data-pos="2"] { transform: translate(-50%, -66%) scale(0.48); opacity: 0.16; z-index: 1; filter: blur(2.5px); }
+  .b-hero-dev[data-pos="3"] { transform: translate(calc(-50% - 82px), -56%) scale(0.6); opacity: 0.35; z-index: 2; filter: blur(1.5px); }
   .b-hero-btn {
     display: flex; align-items: center; justify-content: center; gap: 8px;
     width: 100%; height: 52px; margin-top: 20px; border-radius: 13px;
