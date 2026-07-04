@@ -20,16 +20,22 @@ mkdirSync(outDir, { recursive: true });
 const showable = Object.values(catalog).filter((e) => e?.shortUrl && (e.available == null || e.available > 0) && e.image);
 const isApple = (e) => /apple|macbook/i.test(e.title);
 const isChrome = (e) => /chromebook/i.test(e.title);
+const isGamer = (e) => /rtx|legion|nitro|victus|\btuf\b|\brog\b|strix|omen|katana|gamer|loq/i.test(e.title) || e.specs?.gpuDedicated;
 
-// Mismo criterio que el hero de index.astro: una foto por palabra rotativa.
-const base = showable.find((e) => !isApple(e) && !isChrome(e));
+// Modelos elegidos A MANO (fotos potentes en vista 3/4, recorte limpio).
+// Si alguno sale del catálogo, cae al primer candidato de su categoría.
+const CHOSEN = {
+  notebook: 'MLA19916091', // MSI Sword blanca (3/4, teclado azul: contrasta con la Nitro)
+  macbook: 'MLA51114742', // MacBook Air 13 M4 plata
+  chromebook: 'MLA58953665', // Acer Chromebook 315 (vista angulada, sin accesorios)
+  laptop: 'MLA24609349', // Acer Nitro 5 (3/4 dramática, teclado rojo)
+};
+const byId = (id) => catalog[id]?.image && catalog[id];
 const picks = {
-  notebook: base,
-  macbook: showable.find(isApple) ?? base,
-  // La HP convertible en modo tienda es la foto que mejor "se lee" como
-  // Chromebook (la Acer viene en combo con accesorios que ensucian el recorte).
-  chromebook: showable.find((e) => /hp chromebook/i.test(e.title)) ?? showable.find(isChrome) ?? base,
-  laptop: showable.filter((e) => !isApple(e) && !isChrome(e) && e.image !== base?.image)[1] ?? base,
+  notebook: byId(CHOSEN.notebook) ?? showable.find((e) => isGamer(e) && !isApple(e) && !isChrome(e)),
+  macbook: byId(CHOSEN.macbook) ?? showable.find(isApple),
+  chromebook: byId(CHOSEN.chromebook) ?? showable.find(isChrome),
+  laptop: byId(CHOSEN.laptop) ?? showable.filter((e) => isGamer(e) && !isApple(e) && !isChrome(e))[1],
 };
 
 /** Borra el fondo casi-blanco conectado a los bordes (BFS). */
