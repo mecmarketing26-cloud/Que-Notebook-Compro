@@ -9,16 +9,24 @@ import { liveSearch } from '../../lib/live-search';
 import { specSummary } from '../../shared/attributes.mjs';
 import { idealForSentence } from '../../shared/guidance.mjs';
 
+// PRERENDER: las guías salen como HTML estático en cada build. El contenido es
+// el mismo que servía el SSR (en prod, sin credenciales de ML, el precio "en
+// vivo" ya venía del snapshot) y el catálogo se re-buildea con cada refresh de
+// precios (GitHub Action cada 6 h → push → redeploy), así que la frescura no
+// cambia. Google las indexa sin pasar por la función serverless.
+export const prerender = true;
+
+export function getStaticPaths() {
+  return BLOG_TOPICS.map((t) => ({ params: { slug: t.slug } }));
+}
+
 const { slug } = Astro.params;
 const topic = slug ? getTopic(slug) : undefined;
 if (!topic) return new Response(null, { status: 404 });
 
-const { products, building, universe } = await liveSearch(topic.filters, { max: topic.max ?? 8, match: topic.match });
-
-// El contenido cambia cuando se refresca el catálogo: cachear 1h en el CDN de
-// Netlify (con stale-while-revalidate) baja el TTFB para usuarios y Googlebot.
-Astro.response.headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
-Astro.response.headers.set('Netlify-CDN-Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
+// enrich:false → precios del snapshot (idéntico a prod) y cero llamadas a la
+// API de Mercado Libre durante el build, aunque haya credenciales en .env.
+const { products, building, universe } = await liveSearch(topic.filters, { max: topic.max ?? 8, match: topic.match, enrich: false });
 
 const fmt = (n: number) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n);
 const canonical = new URL(`/blog/${topic.slug}`, Astro.site).toString();

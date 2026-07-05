@@ -32,7 +32,9 @@ export async function refreshIndex(): Promise<number> {
 
 export async function liveSearch(
   filters: NotebookFilters,
-  { max = 12, match, hardPrice = false }: { max?: number; match?: (p: NotebookProduct) => boolean; hardPrice?: boolean } = {},
+  // enrich:false = servir precios del snapshot sin tocar la API (páginas
+  // prerenderizadas en build; en prod sin credenciales el enrich ya era no-op).
+  { max = 12, match, hardPrice = false, enrich = true }: { max?: number; match?: (p: NotebookProduct) => boolean; hardPrice?: boolean; enrich?: boolean } = {},
 ): Promise<{ products: NotebookProduct[]; relaxed: boolean; universe: number; building: boolean; priceEmpty: boolean; similar: NotebookProduct[] }> {
   const universe = allProducts().length;
   let pool = allProducts();
@@ -46,7 +48,8 @@ export async function liveSearch(
   // Pedimos un pequeño excedente para reponer los que el precio en vivo descarte.
   const ranked = recommend(pool, filters, { min: 3, max: max + 4, hardPrice });
   // Price-on-win: precio EN VIVO solo para los que se muestran (los "ganadores").
-  const products = (await enrichWinners(ranked.products as NotebookProduct[])).slice(0, max);
+  const winners = ranked.products as NotebookProduct[];
+  const products = (enrich ? await enrichWinners(winners) : winners).slice(0, max);
 
   // Precio duro sin resultados en el rango → ofrecer "similares" (mismo perfil,
   // ignorando el rango de precio, ordenadas por cercanía de precio).
@@ -54,7 +57,8 @@ export async function liveSearch(
   let similar: NotebookProduct[] = [];
   if (hardPrice && products.length === 0 && (filters.priceMin != null || filters.priceMax != null)) {
     priceEmpty = true;
-    similar = (await enrichWinners(similarByPrice(pool, filters, { max: 10 }) as NotebookProduct[])).slice(0, 6);
+    const sim = similarByPrice(pool, filters, { max: 10 }) as NotebookProduct[];
+    similar = (enrich ? await enrichWinners(sim) : sim).slice(0, 6);
   }
 
   return { products, relaxed: ranked.relaxed, universe, building: false, priceEmpty, similar };

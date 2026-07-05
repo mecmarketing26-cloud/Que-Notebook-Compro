@@ -22,6 +22,9 @@ export const prerender = true;
     </header>
 
     <main class="quiz-main">
+      {/* El quiz es client-only: este h1 (visualmente oculto) es el único
+          encabezado que ven Google y los lectores de pantalla. */}
+      <h1 class="sr-only">Encontrá tu notebook ideal: test para saber qué notebook comprar</h1>
       <Quiz client:only="preact">
         <div class="quiz-panel quiz-loading" aria-busy="true"><span class="quiz-spin"></span></div>
       </Quiz>

@@ -46,11 +46,18 @@ Probá la Action a mano: pestaña **Actions → Refrescar precios → Run workfl
    - Los precios se muestran desde `catalog.json` (que la Action mantiene fresco ≤6 h).
 4. Deploy. Cada `git push` (tuyo o del bot de precios) redeploya solo.
 
-## 4) Dominio
+## 4) Dominio / URL base
 
-`astro.config.mjs` tiene `site: 'https://quenotebookcomprar.com'` (usado en canonical/sitemap/JSON-LD).
-- Si ese es tu dominio: apuntá el DNS a Netlify (Netlify → Domain settings).
-- Si vas a usar otro: cambiá `site` en `astro.config.mjs` antes de deployar.
+La URL base vive en **UN solo lugar**: `site` en `astro.config.mjs`
+(hoy `https://quenotebookcompro.netlify.app`). Canonical, OG/Twitter, JSON-LD,
+`robots.txt` y `sitemap.xml` derivan todos de ahí — no hay nada más hardcodeado.
+
+El día que migres a dominio propio:
+1. Cambiá **solo** `site` en `astro.config.mjs` y pusheá (redeploy automático).
+2. Netlify → Domain settings → agregá el dominio como primario (Netlify redirige
+   `*.netlify.app` al primario con 301 automáticamente).
+3. Search Console → agregá la propiedad del dominio nuevo, verificala, mandá el
+   sitemap nuevo y usá "Cambio de dirección" desde la propiedad vieja.
 
 ## 5) Antes de promocionarlo (opcional pero recomendado)
 

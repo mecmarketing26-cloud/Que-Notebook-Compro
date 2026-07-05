@@ -3,9 +3,9 @@
  * esto es lo único que ve el usuario. Centralizado para A/B testing.
  */
 
+// La URL base NO vive acá: es `site` en astro.config.mjs (única fuente).
 export const SITE = {
   name: '¿Qué Notebook Comprar?',
-  domain: 'quenotebookcomprar.com',
   description:
     'Encontrá la notebook ideal en Mercado Libre Argentina. Respondé un quiz corto o filtrá por specs y te recomendamos modelos concretos con precio y stock en vivo.',
   ogImage: '/og-image.png',

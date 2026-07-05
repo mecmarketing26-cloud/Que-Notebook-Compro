@@ -20,7 +20,8 @@ const day = (iso: string | undefined, fallback: string): string =>
   iso && iso.length >= 10 ? iso.slice(0, 10) : fallback;
 
 export const GET: APIRoute = async ({ site }) => {
-  const base = site?.toString().replace(/\/$/, '') ?? 'https://quenotebookcomprar.com';
+  // `site` viene de astro.config.mjs — única fuente de la URL base.
+  const base = site!.toString().replace(/\/$/, '');
 
   const products = allProducts();
   // Último refresh global del catálogo (rige home y rankings del blog).
@@ -31,9 +32,8 @@ export const GET: APIRoute = async ({ site }) => {
     { url: `${base}/`, lastmod: catalogDay, priority: '1.0', changefreq: 'daily' },
     { url: `${base}/blog`, lastmod: catalogDay, priority: '0.9', changefreq: 'daily' },
     { url: `${base}/comparar`, lastmod: STATIC_UPDATED, priority: '0.7', changefreq: 'monthly' },
+    // /quiz/tecnico y /quiz/general NO van: son redirects 301 al quiz único.
     { url: `${base}/quiz`, lastmod: STATIC_UPDATED, priority: '0.8', changefreq: 'monthly' },
-    { url: `${base}/quiz/tecnico`, lastmod: STATIC_UPDATED, priority: '0.6', changefreq: 'monthly' },
-    { url: `${base}/quiz/general`, lastmod: STATIC_UPDATED, priority: '0.6', changefreq: 'monthly' },
     ...BLOG_TOPICS.map((t) => ({
       url: `${base}/blog/${t.slug}`,
       // El ranking del artículo se recalcula con el catálogo; su publicación es fija.

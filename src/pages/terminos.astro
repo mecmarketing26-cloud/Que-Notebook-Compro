@@ -38,6 +38,14 @@ const sections = [
 <BaseLayout
   title={`Términos, privacidad y aviso legal — ${SITE.name}`}
   description={`Términos, privacidad y aviso legal de ${SITE.name}: comparador independiente con enlaces de afiliado de Mercado Libre.`}
+  jsonLd={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Inicio', item: new URL('/', Astro.site).toString() },
+      { '@type': 'ListItem', position: 2, name: 'Términos y privacidad', item: new URL('/terminos', Astro.site).toString() },
+    ],
+  })}
 >
   <Header />
 

@@ -59,8 +59,9 @@ const guides = GUIDE_SLUGS.map((slug) => {
 // Chips de búsqueda rápida (deep-link a /resultado?q=...).
 const SEARCH_CHIPS = ['Lenovo', 'ASUS', 'Acer', 'HP', 'RTX 4060', 'Ryzen 7'];
 
-// JSON-LD de la home: Organization (branding en resultados) + FAQPage (rich snippet).
-const siteUrl = Astro.site?.toString() ?? 'https://quenotebookcomprar.com/';
+// JSON-LD de la home: Organization (branding en resultados) + WebSite con
+// SearchAction (la búsqueda real del sitio: /resultado?q=) + FAQPage (rich snippet).
+const siteUrl = Astro.site!.toString();
 const faqJsonLd = JSON.stringify([
   {
     '@context': 'https://schema.org',
@@ -76,6 +77,11 @@ const faqJsonLd = JSON.stringify([
     name: SITE.name,
     url: siteUrl,
     inLanguage: 'es-AR',
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: { '@type': 'EntryPoint', urlTemplate: `${siteUrl}resultado?q={search_term_string}` },
+      'query-input': 'required name=search_term_string',
+    },
   },
   {
     '@context': 'https://schema.org',

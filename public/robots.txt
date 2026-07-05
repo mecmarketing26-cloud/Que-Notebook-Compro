@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://quenotebookcomprar.com/sitemap.xml

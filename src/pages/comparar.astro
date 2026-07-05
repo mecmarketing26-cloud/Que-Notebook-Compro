@@ -29,9 +29,18 @@ const fmtPrice = (p: NotebookProduct) =>
   p.price != null
     ? new Intl.NumberFormat('es-AR', { style: 'currency', currency: p.currency || 'ARS', maximumFractionDigits: 0 }).format(p.price)
     : PRODUCTO.sin_precio;
+
+const jsonLd = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Inicio', item: new URL('/', Astro.site).toString() },
+    { '@type': 'ListItem', position: 2, name: 'Comparar notebooks', item: new URL('/comparar', Astro.site).toString() },
+  ],
+});
 ---
 
-<BaseLayout title={`Comparar notebooks — ${SITE.name}`} description="Compará notebooks lado a lado y entendé cuál te conviene y por qué.">
+<BaseLayout title={`Comparar notebooks — ${SITE.name}`} description="Compará notebooks lado a lado y entendé cuál te conviene y por qué." jsonLd={jsonLd}>
   <Header />
 
   <main class="cmp-page">
