@@ -65,27 +65,47 @@ const GTM_ID: string = 'GTM-K7L9C4SF';
 
     {jsonLd && <script type="application/ld+json" is:inline set:html={jsonLd} />}
 
-    <script is:inline>
+    <!-- Analytics DIFERIDO: GTM y GA4 (~430 KiB de JS) cargan recién tras el
+         load + idle, o en la primera interacción — lo que llegue antes. Los
+         eventos previos quedan encolados en dataLayer (el stub de gtag) y se
+         procesan al cargar, así no se pierde el affiliate_click ni el pageview. -->
+    <script is:inline define:vars={{ gtmId: GTM_ID, ga4Id: GA4_ID }}>
       window.dataLayer = window.dataLayer || [];
+      window.gtag = function () { dataLayer.push(arguments); };
+      gtag('js', new Date());
+      if (ga4Id !== 'G-XXXXXXXXXX') gtag('config', ga4Id);
+
+      var tagsLoaded = false;
+      function loadTags() {
+        if (tagsLoaded) return;
+        tagsLoaded = true;
+        if (gtmId !== 'GTM-XXXXXXX') {
+          dataLayer.push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+          var g = document.createElement('script');
+          g.async = true;
+          g.src = 'https://www.googletagmanager.com/gtm.js?id=' + gtmId;
+          document.head.appendChild(g);
+        }
+        if (ga4Id !== 'G-XXXXXXXXXX') {
+          var a = document.createElement('script');
+          a.async = true;
+          a.src = 'https://www.googletagmanager.com/gtag/js?id=' + ga4Id;
+          document.head.appendChild(a);
+        }
+      }
+      ['pointerdown', 'keydown', 'touchstart'].forEach(function (ev) {
+        addEventListener(ev, loadTags, { once: true, passive: true });
+      });
+      if (document.readyState === 'complete') {
+        setTimeout(loadTags, 500);
+      } else {
+        addEventListener('load', function () {
+          'requestIdleCallback' in window
+            ? requestIdleCallback(loadTags, { timeout: 2500 })
+            : setTimeout(loadTags, 1200);
+        });
+      }
     </script>
-
-    {GTM_ID !== 'GTM-XXXXXXX' && (
-      <!-- Google Tag Manager -->
-      <script is:inline define:vars={{ gtmId: GTM_ID }}>
-        (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer',gtmId);
-      </script>
-    )}
-
-    {GA4_ID !== 'G-XXXXXXXXXX' && (
-      <>
-        <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${GA4_ID}`} />
-        <script is:inline define:vars={{ GA4_ID }}>
-          function gtag() { dataLayer.push(arguments); }
-          gtag('js', new Date());
-          gtag('config', GA4_ID);
-        </script>
-      </>
-    )}
   </head>
   <body>
     {GTM_ID !== 'GTM-XXXXXXX' && (

@@ -8,6 +8,7 @@ import { BLOG_TOPICS, getTopic, categoryFor } from '../../data/blog';
 import { liveSearch } from '../../lib/live-search';
 import { specSummary } from '../../shared/attributes.mjs';
 import { idealForSentence } from '../../shared/guidance.mjs';
+import { mlThumb, ML_IMG_ONERROR } from '../../lib/ml-image';
 
 // PRERENDER: las guías salen como HTML estático en cada build. El contenido es
 // el mismo que servía el SSR (en prod, sin credenciales de ML, el precio "en
@@ -167,7 +168,7 @@ const jsonLd = JSON.stringify(jsonLdBlocks);
                   </div>
                   <div class="pcard-body">
                     <a href={`/notebook/${p.id}`} class="pcard-img" aria-label={p.title}>
-                      {p.image && <img src={p.image} alt={p.title} width="120" height="90" loading="lazy" decoding="async" />}
+                      {p.image && <img src={mlThumb(p.image)} onerror={ML_IMG_ONERROR} alt={p.title} width="120" height="90" loading="lazy" decoding="async" />}
                     </a>
                     <div class="pcard-info">
                       <h2 class="pcard-title"><a href={`/notebook/${p.id}`}>{p.title}</a></h2>

@@ -73,7 +73,8 @@ for (const [name, entry] of Object.entries(picks)) {
   await sharp(data, { raw: { width: info.width, height: info.height, channels: 4 } })
     .trim()
     .resize({ width: 640, height: 480, fit: 'inside', withoutEnlargement: true })
-    .png({ palette: true, quality: 90 })
-    .toFile(join(outDir, `${name}.png`));
-  console.log(`${name}.png  ←  ${entry.title.slice(0, 60)}`);
+    // WebP con alpha: ~1/3 del peso del PNG con la misma calidad visual (LCP).
+    .webp({ quality: 82, alphaQuality: 90 })
+    .toFile(join(outDir, `${name}.webp`));
+  console.log(`${name}.webp  ←  ${entry.title.slice(0, 60)}`);
 }

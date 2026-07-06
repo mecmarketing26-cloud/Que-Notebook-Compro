@@ -9,6 +9,7 @@ import { allProducts } from '../../lib/catalog-data';
 import { getTopic, categoryFor } from '../../data/blog';
 import { idealUses, pros, idealForSentence } from '../../shared/guidance.mjs';
 import { specSummary } from '../../shared/attributes.mjs';
+import { mlThumb, mlLarge, ML_IMG_ONERROR } from '../../lib/ml-image';
 import type { NotebookProduct } from '../../lib/types';
 
 const { id } = Astro.params;
@@ -152,7 +153,7 @@ const jsonLd = JSON.stringify([
       </nav>
 
       <div class="product-media">
-        <img src={p.image} alt={p.title} width="600" height="600" fetchpriority="high" decoding="async" />
+        <img src={mlLarge(p.image)} onerror={ML_IMG_ONERROR} alt={p.title} width="600" height="600" fetchpriority="high" decoding="async" />
       </div>
 
       <div class="product-info">
@@ -237,7 +238,7 @@ const jsonLd = JSON.stringify([
             {relatedProducts.map((r) => (
               <a href={`/notebook/${r.id}`} class="related-card lift">
                 <span class="related-img">
-                  {r.image && <img src={r.image} alt={r.title} width="160" height="120" loading="lazy" decoding="async" />}
+                  {r.image && <img src={mlThumb(r.image)} onerror={ML_IMG_ONERROR} alt={r.title} width="160" height="120" loading="lazy" decoding="async" />}
                 </span>
                 <span class="related-title">{r.title}</span>
                 {specSummary(r.specs) && <span class="related-specs">{specSummary(r.specs)}</span>}

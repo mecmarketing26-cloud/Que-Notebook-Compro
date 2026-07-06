@@ -6,6 +6,7 @@ import { SITE, PRODUCTO, CTA_QUIZ } from '../data/copy';
 import { getNotebook } from '../lib/catalog';
 import { allProducts } from '../lib/catalog-data';
 import { buildComparison } from '../shared/compare.mjs';
+import { mlThumb, ML_IMG_ONERROR } from '../lib/ml-image';
 import type { NotebookProduct } from '../lib/types';
 
 const ids = (Astro.url.searchParams.get('ids') ?? '')
@@ -23,7 +24,7 @@ const { rows, verdicts } = enough ? buildComparison(products) : { rows: [], verd
 // Selector: lista liviana (sin precio) para elegir 2 modelos de nuestra base.
 // El precio aparece recién al armar la comparación. `<` evita romper el
 // <script> si algún título tuviera "</".
-const pickList = enough ? '[]' : JSON.stringify(allProducts().map((p) => ({ id: p.id, title: p.title, image: p.image }))).replace(/</g, '\\u003c');
+const pickList = enough ? '[]' : JSON.stringify(allProducts().map((p) => ({ id: p.id, title: p.title, image: mlThumb(p.image) }))).replace(/</g, '\\u003c');
 
 const fmtPrice = (p: NotebookProduct) =>
   p.price != null
@@ -83,7 +84,7 @@ const jsonLd = JSON.stringify({
                   {products.map((p) => (
                     <th class="cmp-prod">
                       <a href={`/notebook/${p.id}`} class="cmp-prod-link">
-                        {p.image && <img src={p.image} alt={p.title} width="120" height="120" loading="lazy" />}
+                        {p.image && <img src={mlThumb(p.image)} onerror={ML_IMG_ONERROR} alt={p.title} width="120" height="120" loading="lazy" />}
                         <span class="cmp-prod-title">{p.title}</span>
                       </a>
                       <span class="cmp-prod-price">{fmtPrice(p)}</span>
@@ -165,7 +166,7 @@ const jsonLd = JSON.stringify({
       grid.innerHTML = list
         .map(
           (p) => `<button type="button" class="pick-item${isSel(p.id) ? ' is-sel' : ''}" data-id="${p.id}">
-            <img src="${p.image}" alt="" loading="lazy" />
+            <img src="${p.image}" alt="" loading="lazy" onerror="this.onerror=null;this.src=this.src.replace('D_NQ_NP_2X_','D_NQ_NP_').replace(/-[VO]\\.webp$/,'-F.jpg')" />
             <span class="pick-name">${esc(p.title)}</span>
           </button>`,
         )

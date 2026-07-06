@@ -6,6 +6,7 @@ import { SITE, CTA_QUIZ } from '../../data/copy';
 import { BLOG_TOPICS, categoryFor } from '../../data/blog';
 import { allProducts } from '../../lib/catalog-data';
 import { recommend } from '../../shared/filter-engine.mjs';
+import { mlThumb, ML_IMG_ONERROR } from '../../lib/ml-image';
 
 export const prerender = true;
 
@@ -68,7 +69,7 @@ const jsonLd = JSON.stringify({
       <div class="bi-grid">
         <a href={`/blog/${featured.slug}`} class="bi-featured lift">
           {featuredCover
-            ? <img class="bi-img bi-img-feat" src={featuredCover} alt="" width="96" height="96" loading="lazy" decoding="async" />
+            ? <img class="bi-img bi-img-feat" src={mlThumb(featuredCover)} onerror={ML_IMG_ONERROR} alt="" width="96" height="96" loading="lazy" decoding="async" />
             : <span class="bi-ph bi-ph-feat" aria-hidden="true"></span>}
           <div class="bi-feat-body">
             <span class="bi-badge">Más leída</span>
@@ -83,7 +84,7 @@ const jsonLd = JSON.stringify({
         {restCards.map((t) => (
           <a href={`/blog/${t.slug}`} class="bi-card lift">
             {t.cover
-              ? <img class="bi-img bi-img-card" src={t.cover} alt="" loading="lazy" decoding="async" />
+              ? <img class="bi-img bi-img-card" src={mlThumb(t.cover)} onerror={ML_IMG_ONERROR} alt="" loading="lazy" decoding="async" />
               : <span class="bi-ph bi-ph-card" aria-hidden="true"></span>}
             <div class="bi-card-body">
               <span class="bi-card-cat">{categoryFor(t.slug)}</span>

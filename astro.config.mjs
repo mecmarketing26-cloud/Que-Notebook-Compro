@@ -15,6 +15,11 @@ export default defineConfig({
   trailingSlash: 'never',
   output: 'server',
   adapter: netlify(),
+  build: {
+    // Todo el CSS va inline en el HTML (~10 KiB): elimina requests que
+    // bloquean el primer render y acorta la cadena crítica de las fuentes.
+    inlineStylesheets: 'always',
+  },
   integrations: [
     preact({ compat: false }),
     tailwind({ applyBaseStyles: false }),

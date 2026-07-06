@@ -147,14 +147,27 @@ a { color: inherit; text-decoration: none; }
 }
 .btn-ghost:hover { color: var(--color-navy); }
 
-/* ── CTA del quiz (amber con glow pulsante + flecha) ─ */
+/* ── CTA del quiz (amber con glow pulsante + flecha) ─
+   El pulso anima la OPACIDAD de un pseudo-elemento que porta la sombra
+   fuerte (compuesto en GPU), no box-shadow directo (que fuerza repaints). */
 @keyframes ctaGlow {
-  0%, 100% { box-shadow: 0 6px 20px rgba(255,194,51,0.38); }
-  50%      { box-shadow: 0 8px 30px rgba(255,194,51,0.70); }
+  0%, 100% { opacity: 0; }
+  50%      { opacity: 1; }
 }
 .ctaQuiz {
-  animation: ctaGlow 2.2s ease-in-out infinite;
+  position: relative;
+  box-shadow: 0 6px 20px rgba(255,194,51,0.38);
   transition: transform 0.18s ease, background-color 0.18s ease;
+}
+.ctaQuiz::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 8px 30px rgba(255,194,51,0.70);
+  opacity: 0;
+  animation: ctaGlow 2.2s ease-in-out infinite;
+  pointer-events: none;
 }
 .ctaQuiz:hover { transform: translateY(-2px) scale(1.015); background-color: var(--color-amber-hover) !important; }
 .ctaQuiz svg { transition: transform 0.18s ease; }
@@ -240,7 +253,7 @@ a { color: inherit; text-decoration: none; }
 .animate-fade-up { animation: fade-up 0.5s ease both; }
 
 @media (prefers-reduced-motion: reduce) {
-  .ctaQuiz, .lift, .icoTile svg, .animate-fade-up { animation: none !important; transition: none !important; }
+  .ctaQuiz, .ctaQuiz::after, .lift, .icoTile svg, .animate-fade-up { animation: none !important; transition: none !important; }
 }
 
 /* ── Focus visible ─────────────────────────────────── */

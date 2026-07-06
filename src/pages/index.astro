@@ -11,6 +11,7 @@ import { quickPickFilters, filtersToQuery } from '../shared/quiz-map.mjs';
 import { getTopic, categoryFor } from '../data/blog';
 import { allProducts } from '../lib/catalog-data';
 import { recommend } from '../shared/filter-engine.mjs';
+import { mlThumb, ML_IMG_ONERROR } from '../lib/ml-image';
 
 const status = catalogStatus();
 let featured = await getFeatured(8).catch(() => []);
@@ -25,7 +26,7 @@ const vsB = featured[2];
 // Hero "palabra gigante": los 4 equipos son PNGs transparentes recortados de
 // fotos reales del catálogo (regenerables con `node scripts/hero-cutouts.mjs`).
 // Mismo orden que WORDS en el script: notebook → MacBook → Chromebook → laptop.
-const HERO_DEVICES = ['/img/hero/notebook.png', '/img/hero/macbook.png', '/img/hero/chromebook.png', '/img/hero/laptop.png'];
+const HERO_DEVICES = ['/img/hero/notebook.webp', '/img/hero/macbook.webp', '/img/hero/chromebook.webp', '/img/hero/laptop.webp'];
 
 // "Por uso" — 6 íconos de línea que deep-linkean a resultados ya filtrados.
 const USOS: Array<{ key: string; label: string; svg: string }> = [
@@ -188,7 +189,7 @@ function screenLabel(p: any): string {
         </div>
         <a href={top ? `/notebook/${top.id}` : quizHref} class="b-top-img">
           {top?.image
-            ? <img src={top.image} alt={top.title} loading="lazy" decoding="async" />
+            ? <img src={mlThumb(top.image)} onerror={ML_IMG_ONERROR} alt={top.title} loading="lazy" decoding="async" />
             : <span class="ph" aria-hidden="true"></span>}
         </a>
         <div class="b-top-title">{top ? top.title : 'Tu próxima notebook'}</div>
@@ -217,7 +218,7 @@ function screenLabel(p: any): string {
         <div class="b-cmp-row">
           <div class="b-cmp-card">
             <a href={vsA ? `/notebook/${vsA.id}` : quizHref} class="b-cmp-img">
-              {vsA?.image ? <img src={vsA.image} alt={vsA.title} loading="lazy" /> : <span class="ph" aria-hidden="true"></span>}
+              {vsA?.image ? <img src={mlThumb(vsA.image)} onerror={ML_IMG_ONERROR} alt={vsA.title} loading="lazy" /> : <span class="ph" aria-hidden="true"></span>}
             </a>
             <div class="b-cmp-title">{vsA ? vsA.title : 'Opción A'}</div>
             <div class="b-cmp-price">{vsA?.price != null ? fmt(vsA.price) : '—'}</div>
@@ -227,7 +228,7 @@ function screenLabel(p: any): string {
           <span class="vs-chip">VS</span>
           <div class="b-cmp-card">
             <a href={vsB ? `/notebook/${vsB.id}` : quizHref} class="b-cmp-img">
-              {vsB?.image ? <img src={vsB.image} alt={vsB.title} loading="lazy" /> : <span class="ph" aria-hidden="true"></span>}
+              {vsB?.image ? <img src={mlThumb(vsB.image)} onerror={ML_IMG_ONERROR} alt={vsB.title} loading="lazy" /> : <span class="ph" aria-hidden="true"></span>}
             </a>
             <div class="b-cmp-title">{vsB ? vsB.title : 'Opción B'}</div>
             <div class="b-cmp-price">{vsB?.price != null ? fmt(vsB.price) : '—'}</div>
@@ -438,7 +439,8 @@ function screenLabel(p: any): string {
   .b-cmp-title { font-size: 0.72rem; font-weight: 700; color: var(--color-text-primary); line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
   .b-cmp-price { font-family: 'Bricolage Grotesque Variable', sans-serif; font-size: 0.92rem; font-weight: 800; color: var(--color-navy); margin: 2px 0 8px; }
   .b-cmp-spec { display: flex; justify-content: space-between; font-size: 0.68rem; padding: 4px 0; border-top: 1px solid #f4f2ec; }
-  .b-cmp-spec span { color: var(--color-text-muted); }
+  /* text-soft (no muted): contraste AA 4.5:1 sobre la tarjeta blanca. */
+  .b-cmp-spec span { color: var(--color-text-soft); }
   .b-cmp-spec b { color: var(--color-text-navy); font-weight: 700; }
   .vs-chip { align-self: center; flex: none; display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 50%; background: var(--color-amber); color: var(--color-navy); font-family: 'Bricolage Grotesque Variable', sans-serif; font-weight: 800; font-size: 0.7rem; box-shadow: 0 2px 8px rgba(0,0,0,0.35); }
 
@@ -467,7 +469,8 @@ function screenLabel(p: any): string {
   /* ── GUÍAS DEL BLOG ── */
   .b-guides { grid-column: 1 / -1; }
   .b-guides-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
-  .b-guides-link { flex: none; font-size: 0.75rem; font-weight: 700; color: var(--color-blue); }
+  /* blue-hover (no blue): contraste AA sobre el fondo beige --color-bg-deep. */
+  .b-guides-link { flex: none; font-size: 0.75rem; font-weight: 700; color: var(--color-blue-hover); }
   /* En mobile: carrusel horizontal con snap (no genera scroll horizontal de página). */
   .guides-grid { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(200px, 74%); gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 4px; scrollbar-width: none; }
   .guides-grid::-webkit-scrollbar { display: none; }

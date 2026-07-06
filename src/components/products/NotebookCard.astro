@@ -2,6 +2,7 @@
 import type { NotebookProduct } from '../../lib/types';
 import { specSummary } from '../../shared/attributes.mjs';
 import { PRODUCTO } from '../../data/copy';
+import { mlThumb, ML_IMG_ONERROR } from '../../lib/ml-image';
 
 interface Props {
   product: NotebookProduct;
@@ -40,7 +41,7 @@ const isPodium = rank != null && rank <= 3;
     )}
     {discount && <span class="discount-badge">-{discount}%</span>}
     <a href={`/notebook/${p.id}`} class="card-image-link" aria-label={`Ver ${p.title}`}>
-      <img src={p.image} alt={p.title} loading={lazy ? 'lazy' : 'eager'} decoding="async" width="400" height="400" class="card-img" />
+      <img src={mlThumb(p.image)} onerror={ML_IMG_ONERROR} alt={p.title} loading={lazy ? 'lazy' : 'eager'} decoding="async" width="400" height="400" class="card-img" />
     </a>
   </div>
 

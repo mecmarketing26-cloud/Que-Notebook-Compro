@@ -13,11 +13,12 @@ interface Props {
   cta?: string;
 }
 const { slug, title, category, cover, cta = 'Ver guía →' } = Astro.props;
+import { mlThumb, ML_IMG_ONERROR } from '../lib/ml-image';
 ---
 
 <a href={`/blog/${slug}`} class="blogcard lift">
   {cover
-    ? <img class="blogcard-img" src={cover} alt="" loading="lazy" decoding="async" />
+    ? <img class="blogcard-img" src={mlThumb(cover)} onerror={ML_IMG_ONERROR} alt="" loading="lazy" decoding="async" />
     : <span class="blogcard-ph" aria-hidden="true"></span>}
   <div class="blogcard-body">
     <span class="blogcard-cat">{category}</span>

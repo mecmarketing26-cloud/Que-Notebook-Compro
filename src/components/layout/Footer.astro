@@ -81,8 +81,10 @@ const { showDisclosure = true } = Astro.props;
     justify-content: center;
   }
 
+  /* text-secondary en todo el footer: es el gris más claro que cumple
+     contraste AA (4.5:1) sobre el fondo beige --color-bg-deep. */
   .footer-link {
-    color: var(--color-text-soft);
+    color: var(--color-text-secondary);
     font-size: 0.875rem;
     font-weight: 600;
     transition: color 0.15s;
@@ -96,7 +98,7 @@ const { showDisclosure = true } = Astro.props;
     justify-content: center;
   }
   .footer-legal-link {
-    color: var(--color-text-muted);
+    color: var(--color-text-secondary);
     font-size: 0.78rem;
     font-weight: 500;
     transition: color 0.15s;
@@ -105,13 +107,13 @@ const { showDisclosure = true } = Astro.props;
 
   .independence {
     max-width: 660px;
-    color: var(--color-text-muted);
+    color: var(--color-text-secondary);
     font-size: 0.78rem;
     line-height: 1.6;
   }
 
   .copyright {
-    color: var(--color-text-muted);
+    color: var(--color-text-secondary);
     font-size: 0.75rem;
   }
 </style>
