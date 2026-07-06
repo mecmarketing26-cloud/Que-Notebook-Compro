@@ -101,6 +101,7 @@ const isPodium = rank != null && rank <= 3;
     const el = (e.target as HTMLElement)?.closest?.('[data-item-id]') as HTMLElement | null;
     if (!el) return;
     trackAffiliateClick(el.dataset.itemId ?? '', {
+      from: 'resultado',
       price: el.dataset.itemPrice ? Number(el.dataset.itemPrice) : undefined,
     });
   });

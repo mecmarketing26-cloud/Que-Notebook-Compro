@@ -234,7 +234,7 @@ const jsonLd = JSON.stringify([
       {relatedProducts.length > 0 && (
         <section class="related">
           <h2 class="related-h">Notebooks similares</h2>
-          <div class="related-grid">
+          <div class="related-grid" data-list="ficha_similares">
             {relatedProducts.map((r) => (
               <a href={`/notebook/${r.id}`} class="related-card lift">
                 <span class="related-img">
@@ -254,16 +254,33 @@ const jsonLd = JSON.stringify([
         </section>
       )}
     </div>
+
+    <script type="application/json" id="product-data" is:inline set:html={JSON.stringify({
+      id: p.id,
+      name: p.title,
+      brand: s.brand ?? '',
+      price: p.price,
+      currency: p.currency || 'ARS',
+      in_stock: (p.available ?? 0) > 0,
+    }).replace(/</g, '\\u003c')} />
   </main>
 
   <Footer />
 </BaseLayout>
 
 <script>
-  import { trackAffiliateClick } from '../../lib/analytics';
+  import { trackAffiliateClick, trackProductView } from '../../lib/analytics';
+
+  // view_item: la vista de esta ficha (ranking de "más vistas" en GA4).
+  const pd = document.getElementById('product-data');
+  if (pd) {
+    try { trackProductView(JSON.parse(pd.textContent || '{}')); } catch { /* JSON roto: no trackear */ }
+  }
+
   document.querySelectorAll<HTMLElement>('[data-item-id]').forEach((el) => {
     el.addEventListener('click', () => {
       trackAffiliateClick(el.dataset.itemId ?? '', {
+        from: 'ficha',
         price: el.dataset.itemPrice ? Number(el.dataset.itemPrice) : undefined,
       });
     });

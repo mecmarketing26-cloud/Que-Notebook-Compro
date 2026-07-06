@@ -8,7 +8,7 @@
  */
 import { useState, useEffect, useCallback, useMemo } from 'preact/hooks';
 import { quizPicksToFilters, filtersToQuery, hasPinnedBudget } from '../../shared/quiz-map.mjs';
-import { trackQuizStart, trackQuizStep, trackQuizComplete } from '../../lib/analytics';
+import { trackQuizStart, trackQuizStep, trackQuizAnswer, trackQuizComplete, trackQuizResume } from '../../lib/analytics';
 
 type Picks = Record<string, string>;
 interface StepDef {
@@ -192,10 +192,10 @@ export default function Quiz() {
 
   // Mount: decide resume screen vs fresh quiz (browser-only).
   useEffect(() => {
-    trackQuizStart('A');
     const params = new URLSearchParams(window.location.search);
     const modoParam = params.get('modo');
     const forceRestart = params.has('restart');
+    trackQuizStart(modoParam ?? '');
 
     let saved: { url: string; at: number } | null = null;
     try {
@@ -209,6 +209,7 @@ export default function Quiz() {
     if (saved && !forceRestart && !modoParam) {
       setSavedUrl(saved.url);
       setPhase('resume');
+      trackQuizResume('shown');
       return;
     }
     if (modoParam === 'guiado' || modoParam === 'tecnico') {
@@ -231,7 +232,7 @@ export default function Quiz() {
   const progress = Math.round(((i + 1) / totalShown) * 100);
 
   useEffect(() => {
-    if (phase === 'quiz' && current) trackQuizStep('A', i + 1, current.key);
+    if (phase === 'quiz' && current) trackQuizStep(picks.modo ?? '', i + 1, current.key);
   }, [i, phase]);
 
   const pick = useCallback((key: string, v: string) => {
@@ -240,9 +241,15 @@ export default function Quiz() {
 
   const goNext = useCallback(() => {
     const f = buildFlow(picks);
+    // La respuesta queda confirmada recién acá (al tocar Siguiente):
+    // guardamos qué opción eligió en este paso.
+    const cur = f[Math.min(i, f.length - 1)];
+    const value = picks[cur.key] ?? '';
+    const label = cur.options.find((o) => o.v === value)?.label;
+    trackQuizAnswer(picks.modo ?? '', i + 1, cur.key, value, label);
     if (i >= f.length - 1) {
       const filters = quizPicksToFilters(picks);
-      trackQuizComplete('A', filters);
+      trackQuizComplete(picks.modo ?? '', filters);
       const q = filtersToQuery(filters);
       const strict = hasPinnedBudget(picks) ? '&strict=1' : '';
       const url = `/resultado?${q}${strict}`;
@@ -275,8 +282,9 @@ export default function Quiz() {
         <h2 class="qr-title">Ya hiciste el test</h2>
         <p class="qr-sub">¿Querés ver los resultados que te dimos o preferís volver a hacerlo desde cero?</p>
         <div class="qr-actions">
-          <a class="btn btn-primary ctaQuiz qr-btn" href={savedUrl ?? '/resultado'}>Ver mis resultados</a>
+          <a class="btn btn-primary ctaQuiz qr-btn" href={savedUrl ?? '/resultado'} onClick={() => trackQuizResume('view_saved')}>Ver mis resultados</a>
           <button class="qr-redo" type="button" onClick={() => {
+            trackQuizResume('restart');
             try { localStorage.removeItem(RESULT_KEY); } catch {}
             setPicks({}); setStep(0); setPhase('quiz');
           }}>Volver a hacer el test</button>

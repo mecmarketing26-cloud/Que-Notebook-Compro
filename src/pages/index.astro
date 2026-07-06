@@ -182,7 +182,7 @@ function screenLabel(p: any): string {
       </section>
 
       <!-- TOP DEL DÍA -->
-      <section class="b-card b-top lift">
+      <section class="b-card b-top lift" data-list="home_top">
         <div class="b-top-head">
           <h2 class="b-card-h">Top del día</h2>
           {top?.discountPct && top.discountPct >= 5 && <span class="badge-disc">-{top.discountPct}%</span>}
@@ -215,7 +215,7 @@ function screenLabel(p: any): string {
             <span>Decidí fácil</span>
           </li>
         </ol>
-        <div class="b-cmp-row">
+        <div class="b-cmp-row" data-list="home_comparador">
           <div class="b-cmp-card">
             <a href={vsA ? `/notebook/${vsA.id}` : quizHref} class="b-cmp-img">
               {vsA?.image ? <img src={mlThumb(vsA.image)} onerror={ML_IMG_ONERROR} alt={vsA.title} loading="lazy" /> : <span class="ph" aria-hidden="true"></span>}

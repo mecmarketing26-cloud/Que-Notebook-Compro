@@ -157,7 +157,7 @@ const jsonLd = JSON.stringify(jsonLdBlocks);
           </section>
 
           <!-- Ranked cards -->
-          <ol class="post-list">
+          <ol class="post-list" data-list={`blog_${topic.slug}`}>
             {products.map((p, i) => {
               const rb = rankMeta(i);
               return (
@@ -244,6 +244,11 @@ const jsonLd = JSON.stringify(jsonLdBlocks);
       </section>
 
       <p class="post-disclosure">{PRODUCTO.precio_nota} Algunos enlaces son de afiliado: si comprás, ganamos una comisión sin costo extra para vos.</p>
+
+      <script type="application/json" id="ranking-data" is:inline set:html={JSON.stringify({
+        list: `blog_${topic.slug}`,
+        items: products.map((p, idx) => ({ item_id: p.id, item_name: p.title.slice(0, 80), price: p.price, index: idx + 1 })),
+      }).replace(/</g, '\\u003c')} />
     </div>
   </main>
 
@@ -251,7 +256,17 @@ const jsonLd = JSON.stringify(jsonLdBlocks);
 </BaseLayout>
 
 <script>
-  import { trackAffiliateClick } from '../../lib/analytics';
+  import { trackAffiliateClick, trackViewItemList } from '../../lib/analytics';
+
+  // view_item_list: qué productos mostró el ranking de esta guía.
+  const rk = document.getElementById('ranking-data');
+  if (rk) {
+    try {
+      const d = JSON.parse(rk.textContent || '{}');
+      trackViewItemList(d.list ?? 'blog', d.items ?? []);
+    } catch { /* JSON roto: no trackear */ }
+  }
+
   document.querySelectorAll<HTMLElement>('[data-item-id]').forEach((el) => {
     el.addEventListener('click', () => trackAffiliateClick(el.dataset.itemId ?? '', { from: 'blog' }));
   });

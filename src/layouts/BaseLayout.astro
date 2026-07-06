@@ -112,5 +112,41 @@ const GTM_ID: string = 'GTM-K7L9C4SF';
       <noscript set:html={`<iframe src="https://www.googletagmanager.com/ns.html?id=${GTM_ID}" height="0" width="0" style="display:none;visibility:hidden"></iframe>`} />
     )}
     <slot />
+
+    <script>
+      import { trackSelectItem, trackCtaClick } from '../lib/analytics';
+
+      // Ubicación del CTA del quiz según la clase del botón clickeado.
+      const CTA_PLACEMENTS: Array<[string, string]> = [
+        ['nav-cta', 'header'],
+        ['b-hero-btn', 'home_hero'],
+        ['biq-btn', 'blog_index'],
+        ['post-quizbtn', 'post_top'],
+        ['post-cta-btn', 'post_bottom'],
+        ['qr-btn', 'quiz_resume'],
+      ];
+
+      // Delegado global: sirve para TODO el sitio sin instrumentar cada card.
+      document.addEventListener('click', (e) => {
+        const t = e.target as HTMLElement | null;
+
+        // select_item: click en cualquier link hacia una ficha de producto.
+        // La lista de origen sale del contenedor [data-list] más cercano.
+        const prod = t?.closest?.('a[href^="/notebook/"]') as HTMLAnchorElement | null;
+        if (prod) {
+          const id = prod.pathname.split('/').pop() ?? '';
+          const list = (prod.closest('[data-list]') as HTMLElement | null)?.dataset.list ?? location.pathname;
+          const name = (prod.getAttribute('aria-label') ?? prod.textContent ?? '').trim().slice(0, 80);
+          trackSelectItem(id, list, name);
+          return;
+        }
+
+        const cta = t?.closest?.('.ctaQuiz') as HTMLElement | null;
+        if (cta) {
+          const placement = CTA_PLACEMENTS.find(([cls]) => cta.classList.contains(cls))?.[1] ?? 'otro';
+          trackCtaClick(placement);
+        }
+      });
+    </script>
   </body>
 </html>

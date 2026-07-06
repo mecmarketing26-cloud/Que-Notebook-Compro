@@ -101,7 +101,7 @@ const fmt = (n: number) => new Intl.NumberFormat('es-AR', { style: 'currency', c
           {similar.length > 0 && (
             <>
               <p class="pe-similar-h">…o mirá estas parecidas (otro precio):</p>
-              <div class="result-grid">
+              <div class="result-grid" data-list="resultado_similares">
                 {similar.map((p) => <NotebookCard product={p} compare={true} />)}
               </div>
             </>
@@ -126,7 +126,7 @@ const fmt = (n: number) => new Intl.NumberFormat('es-AR', { style: 'currency', c
       ) : (
         <>
           <p class="podium-hint">🏆 El podio: de la mejor opción para vos hacia abajo. Tildá 2 o más para compararlas.</p>
-          <div class="result-grid">
+          <div class="result-grid" data-list="resultado">
             {products.map((p, i) => <NotebookCard product={p} rank={i + 1} compare={true} />)}
           </div>
           <div class="result-actions">
@@ -138,6 +138,15 @@ const fmt = (n: number) => new Intl.NumberFormat('es-AR', { style: 'currency', c
       )}
     </div>
   </main>
+
+  <script type="application/json" id="result-data" is:inline set:html={JSON.stringify({
+    q: q || null,
+    strict: hardPrice,
+    relaxed,
+    price_empty: priceEmpty,
+    results_count: products.length,
+    items: products.map((p, idx) => ({ item_id: p.id, item_name: p.title.slice(0, 80), price: p.price, index: idx + 1 })),
+  }).replace(/</g, '\\u003c')} />
 
   <!-- Compare bar -->
   <div class="compare-bar" id="compare-bar" hidden>
@@ -152,6 +161,26 @@ const fmt = (n: number) => new Intl.NumberFormat('es-AR', { style: 'currency', c
 </BaseLayout>
 
 {building && empty && <script is:inline>setTimeout(() => location.reload(), 6000);</script>}
+
+<script>
+  import { trackViewItemList, trackSearch } from '../lib/analytics';
+
+  // view_item_list + search: qué se mostró y con qué filtros/búsqueda.
+  const rd = document.getElementById('result-data');
+  if (rd) {
+    try {
+      const d = JSON.parse(rd.textContent || '{}');
+      trackViewItemList('resultado', d.items ?? [], {
+        search_term: d.q ?? undefined,
+        strict: d.strict,
+        relaxed: d.relaxed,
+        price_empty: d.price_empty,
+        filters: location.search.slice(1),
+      });
+      if (d.q) trackSearch(d.q, d.results_count ?? 0);
+    } catch { /* JSON roto: no trackear */ }
+  }
+</script>
 
 <script>
   // Collect selected notebooks and drive the compare bar.

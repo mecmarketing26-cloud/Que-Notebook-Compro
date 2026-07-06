@@ -77,7 +77,7 @@ const jsonLd = JSON.stringify({
           )}
 
           <section class="cmp-table-wrap">
-            <table class="cmp-table">
+            <table class="cmp-table" data-list="comparador">
               <thead>
                 <tr>
                   <th class="cmp-corner">Specs</th>
@@ -132,7 +132,14 @@ const jsonLd = JSON.stringify({
 </BaseLayout>
 
 <script>
-  import { trackAffiliateClick } from '../lib/analytics';
+  import { trackAffiliateClick, trackCompareView } from '../lib/analytics';
+
+  // compare_view: comparación efectivamente armada (2+ modelos en tabla).
+  if (document.querySelector('.cmp-table')) {
+    const ids = (new URLSearchParams(location.search).get('ids') ?? '').split(',').filter(Boolean);
+    if (ids.length >= 2) trackCompareView(ids);
+  }
+
   document.querySelectorAll<HTMLElement>('[data-item-id]').forEach((el) => {
     el.addEventListener('click', () => trackAffiliateClick(el.dataset.itemId ?? '', { from: 'compare' }));
   });
