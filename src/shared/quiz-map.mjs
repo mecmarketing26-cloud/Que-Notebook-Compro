@@ -63,8 +63,9 @@ const B = {
     estudio: { ramMinGb: 8, storageMinGb: 256, gpuDedicated: 'any', priceMin: 450_000, sort: 'value' },
     // Diseño/edición de video: CPU fuerte, 16 GB, SSD grande y GPU deseable.
     diseno: { ramMinGb: 16, processorMinTier: 7, storageMinGb: 512, gpuDedicated: 'preferred', priceMin: 1_200_000, sort: 'value' },
-    // Gaming: GPU dedicada sí o sí + 16 GB. Piso real $1.000.000.
-    gaming: { ramMinGb: 16, gpuDedicated: 'required', processorMinTier: 5, storageMinGb: 512, priceMin: 1_000_000, sort: 'value' },
+    // Gaming: GPU con potencia REAL (tier 3 ≈ RTX 3060/4050+: ~120 fps en
+    // 1080p competitivo) + 16 GB. Piso real $1.000.000.
+    gaming: { ramMinGb: 16, gpuDedicated: 'required', gpuMinTier: 3, processorMinTier: 5, storageMinGb: 512, priceMin: 1_000_000, sort: 'value' },
     // Programación: 16 GB y SSD ≥512 para compilar/correr sin trabarse.
     programacion: { ramMinGb: 16, storageMinGb: 512, processorMinTier: 5, priceMin: 800_000, sort: 'value' },
     // Uso básico: lo más barato que ande bien.
@@ -81,7 +82,7 @@ const B = {
     economico: { sort: 'price_asc' }, // requisitos mínimos + ordenar por precio
   },
   juegos: {
-    pesados: { gpuDedicated: 'required', ramMinGb: 16, processorMinTier: 7, storageMinGb: 512, priceMin: 1_300_000 },
+    pesados: { gpuDedicated: 'required', gpuMinTier: 3, ramMinGb: 16, processorMinTier: 7, storageMinGb: 512, priceMin: 1_300_000 },
     livianos: { gpuDedicated: 'preferred', ramMinGb: 8, priceMin: 700_000 },
     no: {},
   },
@@ -99,7 +100,7 @@ export function mergeFilters(...partials) {
     if (!p) continue;
     for (const [k, v] of Object.entries(p)) {
       if (v == null) continue;
-      if (['ramMinGb', 'processorMinTier', 'storageMinGb', 'screenMin', 'priceMin'].includes(k)) {
+      if (['ramMinGb', 'processorMinTier', 'storageMinGb', 'screenMin', 'priceMin', 'gpuMinTier'].includes(k)) {
         out[k] = out[k] == null ? v : Math.max(out[k], v); // strictest minimum
       } else if (['screenMax', 'priceMax'].includes(k)) {
         out[k] = out[k] == null ? v : Math.min(out[k], v); // tightest maximum
@@ -152,7 +153,7 @@ const OS_MAP = {
 
 // Rama guiada: por uso (sin pisos de precio — el presupuesto manda).
 const USO_MAP = {
-  gaming: { gpuDedicated: 'required', ramMinGb: 16, processorMinTier: 5 },
+  gaming: { gpuDedicated: 'required', gpuMinTier: 3, ramMinGb: 16, processorMinTier: 5 },
   estudio: { ramMinGb: 8, storageMinGb: 256 },
   diseno: { ramMinGb: 16, processorMinTier: 7, storageMinGb: 512, gpuDedicated: 'preferred' },
   programacion: { ramMinGb: 16, storageMinGb: 512, processorMinTier: 5 },
@@ -254,6 +255,7 @@ export function queryToFilters(searchParams) {
     storageMinGb: num('storageMinGb'),
     screenMin: num('screenMin'),
     screenMax: num('screenMax'),
+    gpuMinTier: num('gpuMinTier'),
   };
   const gpu = searchParams.get('gpuDedicated');
   if (gpu === 'required' || gpu === 'preferred' || gpu === 'any') f.gpuDedicated = gpu;

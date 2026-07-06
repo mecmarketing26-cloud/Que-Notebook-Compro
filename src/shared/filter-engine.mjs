@@ -12,11 +12,13 @@
  * @property {number} [screenMin]          // inches
  * @property {number} [screenMax]          // inches
  * @property {'required'|'preferred'|'any'} [gpuDedicated]
+ * @property {number} [gpuMinTier]         // piso de GPU real (gpu.mjs; 3 = gamer)
  * @property {'windows'|'mac'|'linux'} [os]
  * @property {'relevance'|'price_asc'|'price_desc'} [sort]
  *
  * Each product is expected to look like: { id, price, specs: NotebookSpecs, ... }
  */
+import { gpuTier, isDedicatedGpu } from './gpu.mjs';
 
 /** Family of a product by OS/brand — 'mac' | 'chrome' | 'other'. */
 export function osFamily(product) {
@@ -57,7 +59,10 @@ export function matchesSpecs(product, f) {
   if (f.storageMinGb != null && !(s.storageGb >= f.storageMinGb)) return false;
   if (f.screenMin != null && !(s.screenInches >= f.screenMin)) return false;
   if (f.screenMax != null && !(s.screenInches <= f.screenMax)) return false;
-  if (f.gpuDedicated === 'required' && s.gpuDedicated !== true) return false;
+  // isDedicatedGpu corrige el flag de ML (una Radeon 780M cargada como
+  // "dedicada" no pasa); gpuMinTier exige potencia real (3 = piso gamer).
+  if (f.gpuDedicated === 'required' && !isDedicatedGpu(s, product.title)) return false;
+  if (f.gpuMinTier != null && gpuTier(s, product.title) < f.gpuMinTier) return false;
   if (f.os && !matchesOs(product, f.os)) return false;
   return true;
 }
@@ -79,9 +84,10 @@ export function score(product, f) {
   if (s.processorTier) pts += s.processorTier; // up to 9
   if (s.storageGb) pts += Math.min(s.storageGb, 2048) / 256; // up to ~8
 
-  // Reward a dedicated GPU when the user wants/prefers one.
-  if ((f.gpuDedicated === 'preferred' || f.gpuDedicated === 'required') && s.gpuDedicated === true) {
-    pts += 6;
+  // Reward GPU power (not just "has one") when the user wants/prefers it:
+  // así una RTX 4070 rankea sobre una 3050 y una MX450 no suma casi nada.
+  if (f.gpuDedicated === 'preferred' || f.gpuDedicated === 'required' || f.gpuMinTier != null) {
+    if (isDedicatedGpu(s, product.title)) pts += 4 + gpuTier(s, product.title);
   }
 
   // Completeness bonus: prefer items we actually have specs for (cleaner cards).
@@ -105,7 +111,9 @@ export function valueScore(product, f = {}) {
   cap += Math.min(s.ramGb ?? 0, 32) / 8; // hasta 4
   cap += Math.min(s.processorTier ?? 0, 9); // hasta 9
   cap += Math.min(s.storageGb ?? 0, 1024) / 256; // hasta 4
-  if ((f.gpuDedicated === 'preferred' || f.gpuDedicated === 'required') && s.gpuDedicated === true) cap += 5;
+  if (f.gpuDedicated === 'preferred' || f.gpuDedicated === 'required' || f.gpuMinTier != null) {
+    if (isDedicatedGpu(s, product.title)) cap += 2 + Math.min(gpuTier(s, product.title), 6);
+  }
   const known = ['ramGb', 'processorTier', 'storageGb', 'screenInches'].filter((k) => s[k] != null).length;
   cap += known * 0.5;
   return cap / (price / 1_000_000);
@@ -137,6 +145,9 @@ export function filterNotebooks(products, f = {}) {
  */
 // Spec relaxations (never touch price). GPU first, then storage, RAM, CPU, screen.
 const SPEC_RELAX_STEPS = [
+  // El piso de GPU se afloja primero (a "gaming liviano") y recién después se suelta.
+  (f) => (f.gpuMinTier != null && f.gpuMinTier > 2 ? { ...f, gpuMinTier: 2 } : null),
+  (f) => (f.gpuMinTier != null ? omit(f, 'gpuMinTier') : null),
   (f) => (f.gpuDedicated === 'required' ? { ...f, gpuDedicated: 'preferred' } : null),
   (f) => (f.gpuDedicated === 'preferred' ? { ...f, gpuDedicated: 'any' } : null),
   (f) => (f.storageMinGb != null ? omit(f, 'storageMinGb') : null),

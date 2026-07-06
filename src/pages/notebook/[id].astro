@@ -28,9 +28,9 @@ const formattedPrice = p.price != null ? fmt(p.price) : null;
 const formattedOld = p.originalPrice ? fmt(p.originalPrice) : null;
 const discount = p.discountPct && p.discountPct >= 5 ? p.discountPct : null;
 
-const uses = idealUses(p.specs);
-const prosList = pros(p.specs);
-const idealLine = idealForSentence(p.specs);
+const uses = idealUses(p.specs, p.title);
+const prosList = pros(p.specs, p.title);
+const idealLine = idealForSentence(p.specs, p.title);
 
 // Display rows from normalized specs.
 const s = p.specs;

@@ -4,6 +4,8 @@
  * verdicts per use case (gaming, trabajo/3D, multitarea, portabilidad, precio...).
  */
 
+import { gpuTier, isDedicatedGpu } from './gpu.mjs';
+
 const fmtPrice = (n) => (n == null ? 's/d' : '$' + Number(n).toLocaleString('es-AR'));
 const gb = (n) => (n == null ? '—' : n >= 1024 ? `${n / 1024} TB` : `${n} GB`);
 
@@ -14,7 +16,7 @@ function power(p) {
     (s.processorTier ?? 0) * 1.4 +
     Math.min(s.ramGb ?? 0, 64) / 8 +
     Math.min(s.storageGb ?? 0, 2048) / 512 +
-    (s.gpuDedicated ? 4 + (s.vramGb ?? 0) : 0) +
+    (isDedicatedGpu(s, p.title) ? 2 + gpuTier(s, p.title) * 2 : 0) +
     (s.refreshHz && s.refreshHz >= 120 ? 1 : 0)
   );
 }
@@ -79,9 +81,12 @@ export function compareVerdicts(products) {
   const name = (p) => (p?.title ?? '').replace(/\s+/g, ' ').slice(0, 48);
   const verdicts = [];
 
-  // 🎮 Gaming
-  const gamer = leader(products, (p) => (p.specs?.gpuDedicated ? 100 + (p.specs.vramGb ?? 0) * 5 + (p.specs.refreshHz ?? 0) / 10 : 0));
-  if (gamer && gamer.specs?.gpuDedicated) {
+  // 🎮 Gaming — manda la potencia REAL de la GPU (tier), no solo tener una.
+  const gamer = leader(products, (p) => {
+    const t = gpuTier(p.specs, p.title);
+    return t >= 1 ? 100 + t * 25 + (p.specs?.vramGb ?? 0) * 2 + (p.specs?.refreshHz ?? 0) / 10 : 0;
+  });
+  if (gamer && isDedicatedGpu(gamer.specs, gamer.title)) {
     const s = gamer.specs;
     const bits = [];
     if (s.gpuModel) bits.push(`placa dedicada ${s.gpuModel}`);
@@ -94,7 +99,7 @@ export function compareVerdicts(products) {
   // 🎬 Diseño / edición / 3D (CPU + RAM + GPU)
   const creator = leader(products, (p) => {
     const s = p.specs ?? {};
-    return (s.processorTier ?? 0) * 2 + Math.min(s.ramGb ?? 0, 64) / 4 + (s.gpuDedicated ? 4 + (s.vramGb ?? 0) : 0);
+    return (s.processorTier ?? 0) * 2 + Math.min(s.ramGb ?? 0, 64) / 4 + (isDedicatedGpu(s, p.title) ? 2 + gpuTier(s, p.title) * 2 : 0);
   });
   if (creator) {
     const s = creator.specs ?? {};

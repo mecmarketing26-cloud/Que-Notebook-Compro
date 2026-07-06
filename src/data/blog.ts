@@ -51,9 +51,11 @@ export const BLOG_TOPICS: BlogTopic[] = [
     title: 'Las mejores notebooks gamer 2026 en Argentina (con placa dedicada)',
     h1: 'Las mejores notebooks gamer 2026',
     description: 'Ranking de las mejores notebooks gamer en Mercado Libre Argentina: placa de video dedicada, 16GB+ y buen procesador, con precio actualizado.',
-    intro: 'Si buscás una notebook para jugar, lo que más importa es la placa de video dedicada, 16 GB de RAM o más y un buen procesador. Armamos este ranking en vivo con las mejores notebooks gamer disponibles en Mercado Libre Argentina, ordenadas de mejor a peor y con el precio más barato de cada modelo.',
+    intro: 'Si buscás una notebook para jugar, lo que más importa es la placa de video, 16 GB de RAM o más y un buen procesador. En este ranking solo entran equipos con GPU de potencia gamer real — RTX 3060 / RTX 4050 o superior, capaces de sostener ~120 FPS en 1080p en títulos competitivos. Nada de notebooks "gamer" de marketing con gráficos de entrada. Ordenadas por relación precio-potencia con el precio más barato de cada modelo.',
     datePublished: '2026-06-25',
-    filters: { ramMinGb: 16, gpuDedicated: 'required', processorMinTier: 5, priceMin: 1_000_000 },
+    // gpuMinTier 3 = piso RTX 3060/4050+ (ver shared/gpu.mjs). sort value =
+    // mejor precio-potencia primero, no la más cara.
+    filters: { ramMinGb: 16, gpuDedicated: 'required', gpuMinTier: 3, processorMinTier: 5, priceMin: 1_000_000, sort: 'value' },
     keywords: ['notebook gamer', 'notebook para jugar', 'mejor notebook gamer 2026'],
     guide: [
       {
@@ -130,9 +132,11 @@ export const BLOG_TOPICS: BlogTopic[] = [
     title: 'Las mejores notebooks para programar 2026',
     h1: 'Mejores notebooks para programar',
     description: 'Las mejores notebooks para programación: 16GB de RAM, SSD rápido y buen procesador para compilar y correr todo sin trabarse.',
-    intro: 'Programar pide RAM (16 GB como piso), un SSD rápido y un procesador que aguante compilar y correr varios entornos a la vez. Estas son las mejores notebooks para programadores disponibles ahora.',
+    intro: 'Programar pide RAM (16 GB como piso), un SSD rápido y un procesador que aguante compilar y correr varios entornos a la vez. El ranking mezcla a propósito notebooks Windows (donde también podés instalar Linux) y MacBook, ordenadas por lo que rinden por cada peso invertido — y más abajo te contamos cuál conviene según tu stack.',
     datePublished: '2026-06-25',
-    filters: { ramMinGb: 16, storageMinGb: 512, processorMinTier: 5, priceMin: 800_000 },
+    // Mix Windows/Linux + MacBook a propósito (la guía compara los dos mundos);
+    // 'value' = que suban las que rinden más por peso invertido.
+    filters: { ramMinGb: 16, storageMinGb: 512, processorMinTier: 5, priceMin: 800_000, sort: 'value' },
     keywords: ['notebook para programar', 'notebook para programación', 'notebook desarrollo'],
     guide: [
       {
@@ -140,6 +144,14 @@ export const BLOG_TOPICS: BlogTopic[] = [
         paragraphs: [
           'La RAM es el recurso que más rápido se agota programando: el editor (VS Code come lo suyo), el navegador con documentación, Docker, la base de datos local y el servidor de desarrollo corriendo a la vez superan los 8 GB sin esfuerzo. Por eso el piso serio es 16 GB. El SSD importa tanto como la RAM: uno NVMe de 512 GB hace que instalar dependencias, indexar proyectos y compilar sea otra vida.',
           'En procesador, un i5/Ryzen 5 moderno con 8+ núcleos compila la mayoría de los proyectos sin drama. Subí a i7/Ryzen 7 si trabajás con proyectos grandes, Android Studio o varias máquinas virtuales: los núcleos extra ahí sí se sienten.',
+        ],
+      },
+      {
+        h2: '¿MacBook o Windows (con Linux) para programar?',
+        paragraphs: [
+          'Los dos mundos sirven, y la brecha se achicó mucho: hoy la experiencia de terminal, paquetes y herramientas es parecida en ambos. La MacBook gana en tres cosas concretas: macOS es Unix de verdad (la terminal, Homebrew, Git, Node o Python funcionan nativo, sin capas), los chips Apple Silicon rinden muchísimo por vatio — batería de jornada completa, sin ventilador — y para contenedores los M sorprenden: en benchmarks de suites de tests reales sobre Docker, un M3 Pro corrió la misma suite en menos de la mitad del tiempo que el mismo test bajo WSL2. Y si tu stack es iOS/macOS, no hay debate: Xcode solo existe en Mac.',
+          'La notebook Windows gana en precio-rendimiento (clave en Argentina: por la plata de una MacBook Air te llevás una Ryzen 7 con 32 GB), en flexibilidad (RAM y SSD ampliables, más puertos) y en alcance: WSL2 te instala un Linux completo adentro de Windows — el truco es poner el código y Docker DENTRO de WSL2, ahí el rendimiento es casi nativo —, es la única opción razonable para gamedev (Unity/Unreal con GPU) y te deja usar el mismo equipo para jugar. Además, muchos modelos vienen con FreeDOS o Linux de fábrica, más baratos, ideales si querés Linux nativo puro.',
+          'Nuestra recomendación honesta: si desarrollás para Apple o priorizás batería y portabilidad — y el presupuesto llega a una M con 16 GB (nunca 8) — andá por la MacBook. Para todo lo demás, una Windows/Linux con 16 GB+ y SSD de 512 rinde más por peso invertido: por eso el ranking de arriba las ordena por valor real y se recalcula solo cuando entran modelos nuevos al catálogo.',
         ],
       },
       {
@@ -153,11 +165,11 @@ export const BLOG_TOPICS: BlogTopic[] = [
     faq: [
       {
         q: '¿Se puede programar con 8 GB de RAM?',
-        a: 'Se puede, pero incómodo: con Docker, el IDE y el navegador abiertos vas a estar al límite y el sistema empieza a swapear. 16 GB es el estándar cómodo en 2026; 32 GB si usás muchas VMs o contenedores pesados.',
+        a: 'Se puede, pero incómodo: con Docker, el IDE y el navegador abiertos vas a estar al límite y el sistema empieza a swapear. 16 GB es el estándar cómodo en 2026; 32 GB si usás muchas VMs o contenedores pesados. Esto vale doble en Mac: la RAM no se amplía nunca, comprá 16 GB de entrada.',
       },
       {
         q: '¿Mejor Windows, Linux o Mac para programar?',
-        a: 'Los tres sirven. Windows con WSL2 te da un Linux completo adentro; cualquier notebook de este ranking lo corre bien. Si tu stack es iOS/macOS necesitás una Mac sí o sí. Linux nativo corre perfecto en la mayoría de estos modelos.',
+        a: 'Los tres sirven y la elección pasa por tu stack. Mac: obligatoria para iOS/macOS, terminal Unix nativa y batería imbatible, pero cara en Argentina y sin gaming. Windows: mejor hardware por la plata, WSL2 te da un Linux completo adentro (con el código y Docker dentro de WSL2 rinde casi como Linux nativo) y sirve para gamedev. Linux nativo: corre perfecto en la mayoría de estos modelos, y los que vienen con FreeDOS salen más baratos.',
       },
       {
         q: '¿Cuánto almacenamiento necesito para desarrollo?',
@@ -488,7 +500,9 @@ export const BLOG_TOPICS: BlogTopic[] = [
     description: 'Las notebooks con mejor relación precio-calidad de Mercado Libre Argentina: 16GB, SSD y buen procesador pagando lo justo. Ranking actualizado.',
     intro: 'Ni la más barata ni la más potente: la mejor compra es la que te da más specs por peso invertido. Este ranking busca ese punto dulce — equipos con 16 GB, SSD y procesadores modernos al menor precio disponible hoy.',
     datePublished: '2026-07-03',
-    filters: { ramMinGb: 16, storageMinGb: 256, sort: 'price_asc' },
+    // 'value' = relación capacidad/precio real (no "la más barata con 16GB").
+    // Piso i5/Ryzen 5: sin él ganaba un Ryzen 3 3200U (2019) solo por precio.
+    filters: { ramMinGb: 16, storageMinGb: 256, processorMinTier: 5, sort: 'value' },
     keywords: ['notebook calidad precio', 'mejor notebook precio calidad', 'notebook relación precio calidad'],
     guide: [
       {

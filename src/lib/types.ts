@@ -31,8 +31,10 @@ export interface NotebookFilters {
   screenMin?: number;
   screenMax?: number;
   gpuDedicated?: 'required' | 'preferred' | 'any';
+  /** Piso de potencia real de GPU (shared/gpu.mjs; 3 = gamer ≈ RTX 3060/4050+). */
+  gpuMinTier?: number;
   os?: 'windows' | 'mac' | 'linux';
-  sort?: 'relevance' | 'price_asc' | 'price_desc';
+  sort?: 'relevance' | 'price_asc' | 'price_desc' | 'value';
 }
 
 /** What the site renders: live ML data merged with the two text stores. */

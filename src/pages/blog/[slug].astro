@@ -180,7 +180,7 @@ const jsonLd = JSON.stringify(jsonLdBlocks);
                       <div class="pcard-price">{p.price != null ? fmt(p.price) : PRODUCTO.sin_precio}</div>
                     </div>
                   </div>
-                  <p class="pcard-verdict">{idealForSentence(p.specs)}</p>
+                  <p class="pcard-verdict">{idealForSentence(p.specs, p.title)}</p>
                   <a href={p.shortUrl} class="pcard-buy" target="_blank" rel="sponsored noopener noreferrer" data-item-id={p.id} data-item-price={p.price ?? ''}>
                     Ver precio y condiciones en Mercado Libre
                   </a>
